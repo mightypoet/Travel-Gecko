@@ -247,7 +247,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const userRef = doc(db, 'users', fbUser.uid);
         const userSnap = await getDoc(userRef);
         if (!userSnap.exists()) {
-          await setDoc(userRef, {
+          const newUserData = {
             email: fbUser.email,
             name: fbUser.displayName || 'Traveler',
             role: 'user',
@@ -256,18 +256,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             savedMilestones: [],
             streakDays: 0,
             monthlyContribution: 0
-          });
+          };
+          await setDoc(userRef, newUserData);
+          setCurrentUser({ id: fbUser.uid, ...newUserData } as User);
+        } else {
+          setCurrentUser({ id: fbUser.uid, ...userSnap.data() } as User);
         }
       } else if (role === 'agency') {
         const agencyRef = doc(db, 'agencies', fbUser.uid);
         const agencySnap = await getDoc(agencyRef);
         if (!agencySnap.exists()) {
-          await setDoc(agencyRef, {
+          const newAgencyData = {
             email: fbUser.email,
             agencyName: fbUser.displayName || 'Travel Agency',
             role: 'agency',
             totalRevenueEarned: 0
-          });
+          };
+          await setDoc(agencyRef, newAgencyData);
+          setCurrentUser({ id: fbUser.uid, ...newAgencyData } as Agency);
+        } else {
+          setCurrentUser({ id: fbUser.uid, ...agencySnap.data() } as Agency);
         }
       }
       // state will be updated via onAuthStateChanged

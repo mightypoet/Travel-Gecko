@@ -25,7 +25,7 @@ export const TravelerPortal = () => {
   const filteredTrips = filterDestination === 'All' ? trips : trips.filter(t => t.destination === filterDestination);
 
   const progressPercentage = lockedTrip 
-    ? Math.min(100, Math.floor((user.walletBalance / lockedTrip.price) * 100))
+    ? Math.min(100, Math.floor(((user.walletBalance || 0) / (lockedTrip.price || 1)) * 100))
     : 0;
 
   // Milestone logic
@@ -36,7 +36,7 @@ export const TravelerPortal = () => {
 
   const handleLockTrip = (tripId: string) => {
     // Cannot change locked trip if currently saving with a non-zero balance
-    if (user.lockedTripId && user.walletBalance > 0) {
+    if (user.lockedTripId && (user.walletBalance || 0) > 0) {
       alert("You have active savings! Withdraw or complete your current trip first.");
       return;
     }
@@ -68,13 +68,18 @@ export const TravelerPortal = () => {
   }
 
   // Calculate dynamic strings based on slider
+  const safeWalletBalance = user.walletBalance || 0;
+  const safeMonthlyContrib = user.monthlyContribution && user.monthlyContribution > 0 ? user.monthlyContribution : budgetSlider;
   const estimatedMonths = lockedTrip 
-    ? Math.max(1, Math.ceil((lockedTrip.price - user.walletBalance) / user.monthlyContribution))
+    ? Math.max(1, Math.ceil((lockedTrip.price - safeWalletBalance) / safeMonthlyContrib))
     : Math.max(1, Math.ceil(40000 / budgetSlider));
     
   const finishDate = new Date();
-  finishDate.setMonth(finishDate.getMonth() + estimatedMonths);
-  const estimatedCompletionDate = finishDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  if (isFinite(estimatedMonths)) {
+    finishDate.setMonth(finishDate.getMonth() + estimatedMonths);
+  }
+  const estimatedCompletionDate = isFinite(estimatedMonths) ? finishDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Sometime later';
+
   
   return (
     <div className="w-full flex flex-col lg:flex-row gap-8">
@@ -289,7 +294,7 @@ export const TravelerPortal = () => {
               </div>
             </div>
             <div className="text-3xl font-black font-mono text-black">
-              {user.streakDays}
+              {user.streakDays || 0}
               <span className="text-sm text-gray-light ml-1">days</span>
             </div>
           </div>
@@ -319,14 +324,14 @@ export const TravelerPortal = () => {
                   </p>
                   <p className="text-xs font-bold text-gray-light uppercase flex items-center justify-between">
                     <span>Monthly Contrib.</span>
-                    <span className="font-mono text-black">₹{user.monthlyContribution.toLocaleString('en-IN')}</span>
+                    <span className="font-mono text-black">₹{(user.monthlyContribution || 0).toLocaleString('en-IN')}</span>
                   </p>
                 </div>
 
                 <div className="flex justify-between items-end mb-2">
                   <div>
-                    <p className="text-4xl font-black font-mono uppercase text-black">₹{user.walletBalance.toLocaleString('en-IN')}</p>
-                    <p className="text-xs text-gray-light font-bold">of <span className="text-black">₹{lockedTrip.price.toLocaleString('en-IN')}</span> target</p>
+                    <p className="text-4xl font-black font-mono uppercase text-black">₹{safeWalletBalance.toLocaleString('en-IN')}</p>
+                    <p className="text-xs text-gray-light font-bold">of <span className="text-black">₹{(lockedTrip.price || 0).toLocaleString('en-IN')}</span> target</p>
                   </div>
                   <p className="text-2xl font-black text-gecko-green">{progressPercentage}%</p>
                 </div>
@@ -364,8 +369,8 @@ export const TravelerPortal = () => {
                   </button>
                   <button 
                     className="brutal-button-inverse !p-2 text-sm flex items-center justify-center gap-1 !text-neon-red !border-neon-red hover:!bg-neon-red hover:!text-black"
-                    onClick={() => user.walletBalance > 0 && setShowWithdrawModal(true)}
-                    disabled={user.walletBalance === 0}
+                    onClick={() => safeWalletBalance > 0 && setShowWithdrawModal(true)}
+                    disabled={safeWalletBalance === 0}
                   >
                     Withdraw
                   </button>
@@ -487,13 +492,13 @@ export const TravelerPortal = () => {
 
               <div className="bg-white border-2 border-neon-red p-4 mb-8">
                 <p className="text-lg font-bold mb-4 text-black">
-                  You're only <span className="font-mono text-neon-red">₹{(lockedTrip?.price! - user.walletBalance).toLocaleString('en-IN')}</span> away from your trip.
-                  If you withdraw your <span className="font-mono text-neon-red">₹{user.walletBalance.toLocaleString('en-IN')}</span> savings now:
+                  You're only <span className="font-mono text-neon-red">₹{((lockedTrip?.price || 0) - safeWalletBalance).toLocaleString('en-IN')}</span> away from your trip.
+                  If you withdraw your <span className="font-mono text-neon-red">₹{safeWalletBalance.toLocaleString('en-IN')}</span> savings now:
                 </p>
                 <ul className="space-y-3 font-bold text-gray-light">
                   <li className="flex items-start gap-2">
                     <span className="text-neon-red mt-1">✗</span> 
-                    You lose your {user.streakDays}-day streak.
+                    You lose your {user.streakDays || 0}-day streak.
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-neon-red mt-1">✗</span> 
