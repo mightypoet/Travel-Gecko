@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
-import { User, Building2, Wallet, TrendingUp, ShieldCheck, Zap, TentTree, ShoppingBag } from 'lucide-react';
+import { User, Building2, Wallet, TrendingUp, ShieldCheck, Zap, TentTree, ShoppingBag, X } from 'lucide-react';
 
 export const Login = () => {
   const { login, currentUser } = useAppContext();
   const navigate = useNavigate();
   const [hovered, setHovered] = useState<'user' | 'agency' | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -23,6 +24,7 @@ export const Login = () => {
   const handleLogin = async (role: 'user' | 'agency') => {
     try {
       await login(role);
+      setShowLoginModal(false);
     } catch (error) {
       console.error(error);
     }
@@ -40,14 +42,10 @@ export const Login = () => {
           Save ₹500 today for your dream trip instead of paying ₹50,000 tomorrow.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-6">
-          <button onClick={() => {
-            document.getElementById('roles')?.scrollIntoView({ behavior: 'smooth' })
-          }} className="brutal-button text-xl px-8 py-4">
+          <button onClick={() => setShowLoginModal(true)} className="brutal-button text-xl px-8 py-4">
             Explore Trips
           </button>
-          <button onClick={() => {
-            document.getElementById('roles')?.scrollIntoView({ behavior: 'smooth' })
-          }} className="brutal-button-inverse text-xl px-8 py-4">
+          <button onClick={() => setShowLoginModal(true)} className="brutal-button-inverse text-xl px-8 py-4">
             Start Saving
           </button>
         </div>
@@ -75,52 +73,6 @@ export const Login = () => {
           <p className="text-gray-light font-medium">
             Hit savings milestones (10%, 25%, 50%) to unlock amazing rewards: discounted travel bags, jackets, shoes & gadgets.
           </p>
-        </div>
-      </section>
-
-      {/* Roles Section (Login) */}
-      <section id="roles" className="w-full max-w-4xl px-4 py-20 border-t-8 border-black">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-black uppercase text-black">Choose Your Portal</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-          {/* Traveler Login */}
-          <button
-            onClick={() => handleLogin('user')}
-            onMouseEnter={() => setHovered('user')}
-            onMouseLeave={() => setHovered(null)}
-            className={`brutal-card text-left transition-all duration-300 hover:-translate-y-2 ${hovered === 'agency' ? 'opacity-50 grayscale' : ''}`}
-          >
-            <div className="bg-gecko-green w-16 h-16 flex items-center justify-center border-4 border-black mb-6 brutal-shadow">
-              <User className="text-black w-8 h-8" />
-            </div>
-            <h3 className="text-3xl font-black mb-2 text-black uppercase">Traveler</h3>
-            <p className="text-gray-light font-medium mb-8 min-h-[48px]">
-              Browse trips, lock them, save up, and unlock gear.
-            </p>
-            <div className="brutal-button w-full text-center inline-block">
-              Enter Portal
-            </div>
-          </button>
-
-          {/* Agency Login */}
-          <button
-            onClick={() => handleLogin('agency')}
-            onMouseEnter={() => setHovered('agency')}
-            onMouseLeave={() => setHovered(null)}
-            className={`brutal-card border-black text-left transition-all duration-300 hover:-translate-y-2 ${hovered === 'user' ? 'opacity-50 grayscale' : ''}`}
-          >
-            <div className="bg-off-white w-16 h-16 flex items-center justify-center border-4 border-black mb-6 brutal-shadow">
-              <Building2 className="text-black w-8 h-8" />
-            </div>
-            <h3 className="text-3xl font-black mb-2 text-black uppercase">Agency</h3>
-            <p className="text-gray-light font-medium mb-8 min-h-[48px]">
-              Post itineraries, track guaranteed capital, and grow bookings.
-            </p>
-            <div className="brutal-button-inverse w-full text-center inline-block">
-              Manage Listings
-            </div>
-          </button>
         </div>
       </section>
 
@@ -177,6 +129,68 @@ export const Login = () => {
         </div>
       </section>
 
+      {/* Login Portal Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border-8 border-black p-8 w-full max-w-4xl relative brutal-shadow">
+            <button 
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 bg-neon-red text-white border-4 border-black p-1 hover:scale-110 transition-transform"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            <div className="text-center mb-10">
+              <h2 className="text-4xl sm:text-5xl font-black uppercase text-black">Login to Portal</h2>
+              <p className="text-xl text-gray-light font-medium mt-2">Sign in securely with Google.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+              {/* Traveler Login */}
+              <button
+                onClick={() => handleLogin('user')}
+                onMouseEnter={() => setHovered('user')}
+                onMouseLeave={() => setHovered(null)}
+                className={`brutal-card text-left transition-all duration-300 hover:-translate-y-2 ${hovered === 'agency' ? 'opacity-50 grayscale' : ''}`}
+              >
+                <div className="bg-gecko-green w-16 h-16 flex items-center justify-center border-4 border-black mb-6 brutal-shadow">
+                  <User className="text-black w-8 h-8" />
+                </div>
+                <h3 className="text-3xl font-black mb-2 text-black uppercase">Traveler</h3>
+                <p className="text-gray-light font-medium mb-8 min-h-[48px]">
+                  Browse trips, lock them, save up, and unlock gear.
+                </p>
+                <div className="brutal-button w-full text-center flex items-center justify-center gap-2">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24">
+                      <path fill="currentColor" relative="true" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                  </svg>
+                  Login as Traveler
+                </div>
+              </button>
+
+              {/* Agency Login */}
+              <button
+                onClick={() => handleLogin('agency')}
+                onMouseEnter={() => setHovered('agency')}
+                onMouseLeave={() => setHovered(null)}
+                className={`brutal-card border-black text-left transition-all duration-300 hover:-translate-y-2 ${hovered === 'user' ? 'opacity-50 grayscale' : ''}`}
+              >
+                <div className="bg-off-white w-16 h-16 flex items-center justify-center border-4 border-black mb-6 brutal-shadow">
+                  <Building2 className="text-black w-8 h-8" />
+                </div>
+                <h3 className="text-3xl font-black mb-2 text-black uppercase">Agency</h3>
+                <p className="text-gray-light font-medium mb-8 min-h-[48px]">
+                  Post itineraries, track guaranteed capital, and grow bookings.
+                </p>
+                <div className="brutal-button-inverse w-full text-center flex items-center justify-center gap-2">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24">
+                      <path fill="currentColor" relative="true" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                  </svg>
+                  Login as Agency
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
