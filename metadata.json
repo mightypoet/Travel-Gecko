@@ -1,0 +1,8 @@
+{
+  "name": "Travel Gecko",
+  "description": "A responsive, highly interactive, mobile-optimized web application marketplace for travel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

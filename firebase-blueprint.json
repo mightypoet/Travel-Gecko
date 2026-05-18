@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Traveler user profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["user"] },
+        "lockedTripId": { "type": "string" },
+        "walletBalance": { "type": "number" },
+        "streakDays": { "type": "number" },
+        "monthlyContribution": { "type": "number" }
+      },
+      "required": ["email", "name", "role", "walletBalance"]
+    },
+    "Agency": {
+      "title": "Agency",
+      "description": "Agency profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "agencyName": { "type": "string" },
+        "role": { "type": "string", "enum": ["agency"] },
+        "totalRevenueEarned": { "type": "number" }
+      },
+      "required": ["email", "agencyName", "role", "totalRevenueEarned"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "A travel package",
+      "type": "object",
+      "properties": {
+        "agencyId": { "type": "string" },
+        "title": { "type": "string" },
+        "destination": { "type": "string" },
+        "price": { "type": "number" },
+        "date": { "type": "string" },
+        "duration": { "type": "number" },
+        "image": { "type": "string" },
+        "itinerary": { "type": "array" }
+      },
+      "required": ["agencyId", "title", "destination", "price", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Travelers metadata"
+    },
+    "/agencies/{agencyId}": {
+      "schema": { "$ref": "#/entities/Agency" },
+      "description": "Agencies metadata"
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Trips available"
+    }
+  }
+}

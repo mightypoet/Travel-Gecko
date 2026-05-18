@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'name', 'role', 'walletBalance'])
+          && data.role == 'user'
+          && data.email is string && data.email.size() <= 100
+          && data.name is string && data.name.size() <= 100
+          && data.walletBalance is number;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() 
+        && request.auth.uid == userId
+        && isValidId(userId)
+        && isValidUser(incoming());
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && isValidUser(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'lockedTripId', 'walletBalance', 'streakDays', 'monthlyContribution']);
+    }
+
+    function isValidAgency(data) {
+      return data.keys().hasAll(['email', 'agencyName', 'role', 'totalRevenueEarned'])
+          && data.role == 'agency'
+          && data.email is string && data.email.size() <= 100
+          && data.agencyName is string && data.agencyName.size() <= 100
+          && data.totalRevenueEarned is number;
+    }
+
+    match /agencies/{agencyId} {
+      allow get: if isSignedIn() && request.auth.uid == agencyId;
+      allow create: if isSignedIn() 
+        && request.auth.uid == agencyId
+        && isValidId(agencyId)
+        && isValidAgency(incoming());
+      allow update: if isSignedIn()
+        && request.auth.uid == agencyId
+        && isValidAgency(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['agencyName', 'totalRevenueEarned']);
+    }
+
+    function isValidTrip(data) {
+      return data.keys().hasAll(['agencyId', 'title', 'destination', 'price', 'date'])
+          && data.agencyId is string && data.agencyId.size() <= 128
+          && data.title is string && data.title.size() <= 100
+          && data.destination is string && data.destination.size() <= 100
+          && data.price is number
+          && data.date is string && data.date.size() <= 50;
+    }
+
+    match /trips/{tripId} {
+      // Anyone signed in can read trips
+      allow list: if isSignedIn();
+      allow get: if isSignedIn() && isValidId(tripId);
+
+      allow create: if isSignedIn()
+        && isValidId(tripId)
+        && isValidTrip(incoming())
+        && incoming().agencyId == request.auth.uid
+        && exists(/databases/$(database)/documents/agencies/$(incoming().agencyId));
+
+      allow update: if isSignedIn()
+        && isValidTrip(incoming())
+        && existing().agencyId == request.auth.uid
+        && incoming().agencyId == existing().agencyId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'destination', 'price', 'date', 'duration', 'image', 'itinerary']);
+
+      allow delete: if isSignedIn()
+        && existing().agencyId == request.auth.uid;
+    }
+  }
+}
