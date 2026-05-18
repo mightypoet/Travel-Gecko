@@ -8,6 +8,8 @@ export const Login = () => {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState<'user' | 'agency' | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentUser) {
@@ -22,11 +24,17 @@ export const Login = () => {
   }, [currentUser, navigate]);
 
   const handleLogin = async (role: 'user' | 'agency') => {
+    if (!consent) {
+      setError('You must agree to the Terms of Service before logging in.');
+      return;
+    }
+    setError(null);
     try {
       await login(role);
       setShowLoginModal(false);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Login failed. Please try again.');
     }
   };
 
@@ -139,10 +147,31 @@ export const Login = () => {
             >
               <X className="w-8 h-8" />
             </button>
-            <div className="text-center mb-10">
+            <div className="text-center mb-6">
               <h2 className="text-4xl sm:text-5xl font-black uppercase text-black">Login to Portal</h2>
               <p className="text-xl text-gray-light font-medium mt-2">Sign in securely with Google.</p>
             </div>
+            
+            <div className="flex items-center gap-3 justify-center mb-4 bg-gray-100 p-4 border-2 border-black max-w-xl mx-auto">
+              <input 
+                type="checkbox" 
+                id="consent" 
+                checked={consent} 
+                onChange={(e) => {
+                  setConsent(e.target.checked);
+                  if (e.target.checked) setError(null);
+                }} 
+                className="w-5 h-5 accent-gecko-green rounded-none border-2 border-black" 
+              />
+              <label htmlFor="consent" className="font-bold text-sm">I agree to the Terms of Service and Privacy Policy.</label>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-3 bg-neon-red text-white text-center font-bold border-2 border-black brutal-shadow max-w-xl mx-auto">
+                {error}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
               {/* Traveler Login */}
               <button

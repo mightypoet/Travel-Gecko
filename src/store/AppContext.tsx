@@ -271,9 +271,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
       }
       // state will be updated via onAuthStateChanged
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert('Login failed');
+      throw new Error(e.message || 'Login failed');
     }
   };
 
