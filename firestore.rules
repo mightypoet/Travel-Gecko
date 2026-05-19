@@ -19,6 +19,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      allow list: if isSignedIn();
       allow get: if isSignedIn() && request.auth.uid == userId;
       allow create: if isSignedIn() 
         && request.auth.uid == userId
@@ -39,6 +40,7 @@ service cloud.firestore {
     }
 
     match /agencies/{agencyId} {
+      allow list: if isSignedIn();
       allow get: if isSignedIn() && request.auth.uid == agencyId;
       allow create: if isSignedIn() 
         && request.auth.uid == agencyId

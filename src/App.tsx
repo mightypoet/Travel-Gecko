@@ -18,7 +18,7 @@ const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, 
   
   if (currentUser.role !== allowedRole) {
     if (currentUser.role === 'admin') return <Navigate to="/admin" replace />;
-    return <Navigate to={`/dashboard/${currentUser.role === 'user' ? 'traveler' : 'agency'}`} replace />;
+    return <Navigate to={`/${currentUser.role === 'user' ? 'traveler' : 'agency'}`} replace />;
   }
   
   return <>{children}</>;
@@ -34,7 +34,7 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route 
-              path="/dashboard/traveler" 
+              path="/traveler" 
               element={
                 <ProtectedRoute allowedRole="user">
                   <TravelerPortal />
@@ -42,7 +42,15 @@ const AppContent = () => {
               } 
             />
             <Route 
-              path="/dashboard/agency" 
+              path="/traveller" 
+              element={
+                <ProtectedRoute allowedRole="user">
+                  <TravelerPortal />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/agency" 
               element={
                 <ProtectedRoute allowedRole="agency">
                   <AgencyPortal />

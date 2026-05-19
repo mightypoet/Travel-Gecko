@@ -14,9 +14,9 @@ export const Login = () => {
   useEffect(() => {
     if (currentUser) {
       if (currentUser.role === 'user') {
-        navigate('/dashboard/traveler');
+        navigate('/traveler');
       } else if (currentUser.role === 'agency') {
-        navigate('/dashboard/agency');
+        navigate('/agency');
       } else if (currentUser.role === 'admin') {
         navigate('/admin');
       }

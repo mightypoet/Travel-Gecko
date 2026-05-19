@@ -3,7 +3,7 @@ import { useAppContext, User, Trip } from '../store/AppContext';
 import { MapPin, Calendar, Clock, AlertTriangle, Gift, DollarSign, Wallet, ShieldAlert, Award, Copy, Check, Flame, Filter, Search, Map } from 'lucide-react';
 
 export const TravelerPortal = () => {
-  const { currentUser, trips, lockUserTrip, updateUserWallet, agencies, transactions } = useAppContext();
+  const { currentUser, trips, lockUserTrip, updateUserWallet, updateUserProfile, agencies, transactions } = useAppContext();
   const user = currentUser as User;
 
   const [budgetSlider, setBudgetSlider] = useState<number>(3000);
@@ -81,6 +81,56 @@ export const TravelerPortal = () => {
   const estimatedCompletionDate = isFinite(estimatedMonths) ? finishDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Sometime later';
 
   
+  const [phone, setPhone] = useState('');
+  const [preferences, setPreferences] = useState('');
+  
+  if (user && user.profileCompleted === false) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-off-white">
+        <div className="bg-white border-8 border-black p-8 w-full max-w-2xl brutal-shadow relative">
+          <h2 className="text-4xl font-black uppercase mb-4 text-black">Complete Your Profile</h2>
+          <p className="text-gray-light font-bold mb-8">Tell us a bit about yourself so we can personalize your dashboard.</p>
+          
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-black uppercase mb-2">Phone Number</label>
+              <input 
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 9876543210"
+                className="w-full bg-white border-4 border-black py-3 px-4 font-bold text-black focus:border-gecko-green focus:outline-none"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-black uppercase mb-2">Travel Preferences</label>
+              <textarea 
+                value={preferences}
+                onChange={(e) => setPreferences(e.target.value)}
+                placeholder="e.g. Beaches, Mountains, Solo trips..."
+                className="w-full bg-white border-4 border-black py-3 px-4 font-bold text-black focus:border-gecko-green focus:outline-none h-32"
+              />
+            </div>
+            
+            <button 
+              className="brutal-button w-full text-xl py-4 mt-4"
+              onClick={() => {
+                if(phone.length > 5) {
+                  updateUserProfile(user.id, { phone, preferences, profileCompleted: true });
+                } else {
+                  alert("Please enter a valid phone number.");
+                }
+              }}
+            >
+              Start Exploring
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col lg:flex-row gap-8">
       

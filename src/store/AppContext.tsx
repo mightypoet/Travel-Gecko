@@ -37,6 +37,9 @@ export interface User {
   streakDays: number;
   monthlyContribution: number;
   isActive?: boolean;
+  phone?: string;
+  preferences?: string;
+  profileCompleted?: boolean;
 }
 
 export interface Agency {
@@ -46,6 +49,9 @@ export interface Agency {
   role: 'agency';
   totalRevenueEarned: number;
   isApproved?: boolean;
+  phone?: string;
+  registrationNumber?: string;
+  profileCompleted?: boolean;
 }
 
 export interface Admin {
@@ -81,6 +87,8 @@ interface AppContextProps {
   updateUserWallet: (userId: string, newBalance: number, amount?: number, type?: 'deposit' | 'withdraw') => void;
   lockUserTrip: (userId: string, tripId: string) => void;
   requestContactAccess: (agencyId: string, userId: string) => void;
+  updateUserProfile: (userId: string, data: Partial<User>) => void;
+  updateAgencyProfile: (agencyId: string, data: Partial<Agency>) => void;
   agencies: Agency[];
   transactions: WalletTransaction[];
   contactRequests: ContactRequest[];
@@ -159,12 +167,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Sync Trips
   useEffect(() => {
+    if (!firebaseUser) return;
     const unsub = onSnapshot(collection(db, 'trips'), (snapshot) => {
       const tripsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Trip));
       setTrips(tripsData);
     });
     return () => unsub();
-  }, []);
+  }, [firebaseUser]);
 
   // Sync Auth State & Current User Profile
   useEffect(() => {
@@ -192,7 +201,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           if (agencyDoc.exists()) {
             setCurrentUser({ id: user.uid, ...agencyDoc.data() } as Agency);
           } else {
-             setCurrentUser(null);
+             // Document might be getting created by the login function right now,
+             // so we don't set currentUser to null here to avoid race conditions.
+             // If they are not logging in but refreshing, they stay on the home page until doc is created.
           }
         }
       } else {
@@ -203,9 +214,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => unsubAuth();
   }, []);
 
-  // Sync All Users and Agencies for Admin
+  // Sync All Users and Agencies for Admin/Agency
   useEffect(() => {
-    if (currentUser?.role === 'admin') {
+    if (!firebaseUser) return;
+    
+    if (currentUser?.role === 'admin' || currentUser?.role === 'agency') {
       const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
         setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
       });
@@ -216,14 +229,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         unsubUsers();
         unsubAgencies();
       };
-    } else {
-       // If not admin, just pull all agencies to display their names in the traveler portal
+    } else if (currentUser?.role === 'user') {
+       // If traveler, just pull all agencies to display their names
        const unsubAgencies = onSnapshot(collection(db, 'agencies'), (snapshot) => {
           setAgencies(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Agency)));
        });
        return () => unsubAgencies();
     }
-  }, [currentUser]);
+  }, [currentUser, firebaseUser]);
 
   // Update current user when their profile changes
   useEffect(() => {
@@ -255,7 +268,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             walletBalance: 0,
             savedMilestones: [],
             streakDays: 0,
-            monthlyContribution: 0
+            monthlyContribution: 0,
+            profileCompleted: false
           };
           await setDoc(userRef, newUserData);
           setCurrentUser({ id: fbUser.uid, ...newUserData } as User);
@@ -270,7 +284,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             email: fbUser.email,
             agencyName: fbUser.displayName || 'Travel Agency',
             role: 'agency',
-            totalRevenueEarned: 0
+            totalRevenueEarned: 0,
+            profileCompleted: false
           };
           await setDoc(agencyRef, newAgencyData);
           setCurrentUser({ id: fbUser.uid, ...newAgencyData } as Agency);
@@ -366,6 +381,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const updateUserProfile = async (userId: string, data: Partial<User>) => {
+    if (userId === firebaseUser?.uid) {
+       await updateDoc(doc(db, 'users', userId), data);
+    }
+  };
+
+  const updateAgencyProfile = async (agencyId: string, data: Partial<Agency>) => {
+    if (agencyId === firebaseUser?.uid) {
+       await updateDoc(doc(db, 'agencies', agencyId), data);
+    }
+  };
+
   const lockUserTrip = async (userId: string, tripId: string) => {
     if (userId === firebaseUser?.uid) {
        await updateDoc(doc(db, 'users', userId), { lockedTripId: tripId });
@@ -384,6 +411,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateUserWallet,
       lockUserTrip,
       requestContactAccess,
+      updateUserProfile,
+      updateAgencyProfile,
       agencies,
       transactions,
       contactRequests

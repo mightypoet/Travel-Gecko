@@ -3,7 +3,7 @@ import { useAppContext, Agency, Trip } from '../store/AppContext';
 import { Users, IndianRupee, CheckCircle2, Plus, Activity, Mail, Check, X } from 'lucide-react';
 
 export const AgencyPortal = () => {
-  const { currentUser, trips, addTrip, updateTrip, users, contactRequests, requestContactAccess } = useAppContext();
+  const { currentUser, trips, addTrip, updateTrip, users, contactRequests, requestContactAccess, updateAgencyProfile } = useAppContext();
   const agency = currentUser as Agency;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -16,6 +16,57 @@ export const AgencyPortal = () => {
     image: '',
   });
   const [newItinerary, setNewItinerary] = useState([{ day: 1, title: '', description: '' }]);
+
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [phone, setPhone] = useState('');
+  
+  if (agency && agency.profileCompleted === false) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-off-white">
+        <div className="bg-white border-8 border-black p-8 w-full max-w-2xl brutal-shadow relative">
+          <h2 className="text-4xl font-black uppercase mb-4 text-black">Complete Agency Profile</h2>
+          <p className="text-gray-light font-bold mb-8">Setup your agency details to start listing trips.</p>
+          
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-black uppercase mb-2">Registration Number / GST</label>
+              <input 
+                type="text"
+                value={registrationNumber}
+                onChange={(e) => setRegistrationNumber(e.target.value)}
+                placeholder="e.g. 29ABCDE1234F1Z5"
+                className="w-full bg-white border-4 border-black py-3 px-4 font-bold text-black focus:border-gecko-green focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-black uppercase mb-2">Agency Support Phone</label>
+              <input 
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 9876543210"
+                className="w-full bg-white border-4 border-black py-3 px-4 font-bold text-black focus:border-gecko-green focus:outline-none"
+              />
+            </div>
+            
+            <button 
+              className="brutal-button w-full text-xl py-4 mt-4"
+              onClick={() => {
+                if(registrationNumber.length > 5 && phone.length > 5) {
+                  updateAgencyProfile(agency.id, { phone, registrationNumber, profileCompleted: true });
+                } else {
+                  alert("Please enter valid details.");
+                }
+              }}
+            >
+              Enter Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate analytics
   const agencyTrips = trips.filter(t => t.agencyId === agency.id);
