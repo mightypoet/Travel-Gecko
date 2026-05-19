@@ -23,8 +23,13 @@ export const loginWithGoogle = async () => {
     try {
         const result = await signInWithPopup(auth, googleProvider);
         return result.user;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error signing in with Google:", error);
+        if (error.code === 'auth/popup-blocked') {
+            throw new Error('Popup blocked by browser. Please allow popups or open the app in a new tab to sign in.');
+        } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+            throw new Error('Sign-in popup was closed before completing. Please try again.');
+        }
         throw error;
     }
 };
