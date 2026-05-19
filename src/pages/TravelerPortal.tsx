@@ -1,129 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { useAppContext, User, Trip } from '../store/AppContext';
-import { MapPin, Calendar, Clock, AlertTriangle, Gift, DollarSign, Wallet, ShieldAlert, Award, Copy, Check, Flame, Filter, Search, Map } from 'lucide-react';
+import React, { useState } from 'react';
+import { useAppContext, User } from '../store/AppContext';
+import { 
+  Home, Search, PlusSquare, Map, User as UserIcon, Bell, Send, 
+  MoreHorizontal, Heart, MessageCircle, Share2, Bookmark, Grid, Plane, MapPin 
+} from 'lucide-react';
+
+type TabState = 'home' | 'explore' | 'create' | 'trips' | 'profile';
 
 export const TravelerPortal = () => {
-  const { currentUser, trips, lockUserTrip, updateUserWallet, updateUserProfile, agencies, transactions } = useAppContext();
+  const { currentUser, updateUserProfile } = useAppContext();
   const user = currentUser as User;
-
-  const [budgetSlider, setBudgetSlider] = useState<number>(3000);
-  const [activeTab, setActiveTab] = useState<'marketplace' | 'rewards'>('marketplace');
-  const [filterDestination, setFilterDestination] = useState<string>('All');
   
-  const [topUpAmount, setTopUpAmount] = useState<string>('');
-  const [showTopUpModal, setShowTopUpModal] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [showMapModal, setShowMapModal] = useState<Trip | null>(null);
-  
-  const [showRewardModal, setShowRewardModal] = useState<{title: string, code: string} | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabState>('home');
+  const [likedTrips, setLikedTrips] = useState<Record<string, boolean>>({});
 
-  const lockedTrip = trips.find(t => t.id === user.lockedTripId);
-  const agency = lockedTrip ? agencies.find(a => a.id === lockedTrip.agencyId) : null;
-
-  const destinations = ['All', ...Array.from(new Set(trips.map(t => t.destination)))];
-  const filteredTrips = filterDestination === 'All' ? trips : trips.filter(t => t.destination === filterDestination);
-
-  const progressPercentage = lockedTrip 
-    ? Math.min(100, Math.floor(((user.walletBalance || 0) / (lockedTrip.price || 1)) * 100))
-    : 0;
-
-  // Milestone logic
-  const milestone10 = progressPercentage >= 10;
-  const milestone25 = progressPercentage >= 25;
-  const milestone50 = progressPercentage >= 50;
-  const milestone75 = progressPercentage >= 75;
-
-  const handleLockTrip = (tripId: string) => {
-    // Cannot change locked trip if currently saving with a non-zero balance
-    if (user.lockedTripId && (user.walletBalance || 0) > 0) {
-      alert("You have active savings! Withdraw or complete your current trip first.");
-      return;
-    }
-    lockUserTrip(user.id, tripId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleTopUp = () => {
-    const amt = parseInt(topUpAmount, 10);
-    if (!isNaN(amt) && amt > 0) {
-      updateUserWallet(user.id, user.walletBalance + amt, amt, 'deposit');
-    }
-    setShowTopUpModal(false);
-    setTopUpAmount('');
-  };
-
-  const handleWithdraw = () => {
-    // Withdrawal protection warning logic happens in the modal UI
-    const amountToWithdraw = user.walletBalance;
-    updateUserWallet(user.id, 0, amountToWithdraw, 'withdraw');
-    lockUserTrip(user.id, ''); // Reset trip lock if withdrawing everything
-    setShowWithdrawModal(false);
-  };
-
-  const copyToClipboard = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  // Calculate dynamic strings based on slider
-  const safeWalletBalance = user.walletBalance || 0;
-  const safeMonthlyContrib = user.monthlyContribution && user.monthlyContribution > 0 ? user.monthlyContribution : budgetSlider;
-  const estimatedMonths = lockedTrip 
-    ? Math.max(1, Math.ceil((lockedTrip.price - safeWalletBalance) / safeMonthlyContrib))
-    : Math.max(1, Math.ceil(40000 / budgetSlider));
-    
-  const finishDate = new Date();
-  if (isFinite(estimatedMonths)) {
-    finishDate.setMonth(finishDate.getMonth() + estimatedMonths);
-  }
-  const estimatedCompletionDate = isFinite(estimatedMonths) ? finishDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Sometime later';
-
-  
+  // Form profile completion check
   const [phone, setPhone] = useState('');
   const [preferences, setPreferences] = useState('');
   
   if (user && user.profileCompleted === false) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-off-white">
-        <div className="bg-white border-8 border-black p-8 w-full max-w-2xl brutal-shadow relative">
-          <h2 className="text-4xl font-black uppercase mb-4 text-black">Complete Your Profile</h2>
-          <p className="text-gray-light font-bold mb-8">Tell us a bit about yourself so we can personalize your dashboard.</p>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-white">
+        <div className="w-full max-w-md">
+          <h2 className="text-3xl font-serif font-bold mb-4">Complete Profile</h2>
+          <p className="text-neutral-500 mb-8">Setup your traveler portfolio.</p>
           
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-black uppercase mb-2">Phone Number</label>
+              <label className="block text-xs font-bold uppercase mb-2 text-neutral-400">Phone</label>
               <input 
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 9876543210"
-                className="w-full bg-white border-4 border-black py-3 px-4 font-bold text-black focus:border-gecko-green focus:outline-none"
+                className="w-full border border-neutral-200 rounded-md py-3 px-4 focus:border-black focus:outline-none"
               />
             </div>
-            
             <div>
-              <label className="block text-sm font-black uppercase mb-2">Travel Preferences</label>
+              <label className="block text-xs font-bold uppercase mb-2 text-neutral-400">Bio / Preferences</label>
               <textarea 
                 value={preferences}
                 onChange={(e) => setPreferences(e.target.value)}
-                placeholder="e.g. Beaches, Mountains, Solo trips..."
-                className="w-full bg-white border-4 border-black py-3 px-4 font-bold text-black focus:border-gecko-green focus:outline-none h-32"
+                placeholder="Digital Nomad, Coffee Enthusiast..."
+                className="w-full border border-neutral-200 rounded-md py-3 px-4 focus:border-black focus:outline-none h-24"
               />
             </div>
-            
             <button 
-              className="brutal-button w-full text-xl py-4 mt-4"
+              className="w-full bg-black text-white font-bold rounded-md py-4 mt-6"
               onClick={() => {
                 if(phone.length > 5) {
                   updateUserProfile(user.id, { phone, preferences, profileCompleted: true });
-                } else {
-                  alert("Please enter a valid phone number.");
                 }
               }}
             >
-              Start Exploring
+              Enter Voyage
             </button>
           </div>
         </div>
@@ -131,521 +61,283 @@ export const TravelerPortal = () => {
     );
   }
 
+  // Realistic mock data for the Instagram-style feed
+  const stories = [
+    { id: 1, title: 'Kolkata \'26', image: 'https://images.unsplash.com/photo-1558431382-27e303142255?q=80&w=200&auto=format&fit=crop' },
+    { id: 2, title: 'Kyoto Autumn', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=200&auto=format&fit=crop' },
+    { id: 3, title: 'Paris Fashion', image: 'https://images.unsplash.com/photo-1431274151483-f8a183d2aeb3?q=80&w=200&auto=format&fit=crop' },
+    { id: 4, title: 'Bali Zen', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=200&auto=format&fit=crop' },
+    { id: 5, title: 'Kerala', image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?q=80&w=200&auto=format&fit=crop' },
+  ];
+
+  const profileTrips = [
+    { id: 1, stamp: "BALI '25", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=400&auto=format&fit=crop" },
+    { id: 2, stamp: "TOKYO '26", image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=400&auto=format&fit=crop" },
+    { id: 3, stamp: "PARIS '24", image: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=400&auto=format&fit=crop" },
+    { id: 4, stamp: "GOA '23", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?q=80&w=400&auto=format&fit=crop" },
+    { id: 5, stamp: "SPITI '25", image: "https://images.unsplash.com/photo-1594951465223-28959cb31a69?q=80&w=400&auto=format&fit=crop" },
+    { id: 6, stamp: "KASOL '26", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400&auto=format&fit=crop" },
+  ];
+
+  const toggleLike = (id: string) => {
+    setLikedTrips(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-8">
+    <div className="w-full min-h-screen bg-white pb-20 relative max-w-xl mx-auto border-x border-neutral-100 shadow-sm">
       
-      {/* Left Column: Marketplace / Main View */}
-      <div className="flex-1 order-2 lg:order-1">
-        
-        <div className="flex gap-4 mb-8 border-b-4 border-black pb-2">
-            <button className={`text-2xl sm:text-3xl font-black uppercase transition-colors ${activeTab === 'marketplace' ? 'text-gecko-green' : 'text-gray-light hover:text-black'}`} onClick={() => setActiveTab('marketplace')}>Travel Marketplace</button>
-            <button className={`text-2xl sm:text-3xl font-black uppercase transition-colors ${activeTab === 'rewards' ? 'text-gecko-green' : 'text-gray-light hover:text-black'}`} onClick={() => setActiveTab('rewards')}>Partner Gear</button>
-        </div>
-
-        {activeTab === 'marketplace' ? (
-        <div className="mb-8">
-          {/* Hero Interactive Tool - visible even when locked to show planning */}
-          {!user.lockedTripId && (
-            <div className="brutal-card bg-gecko-green/10 border-gecko-green brutal-shadow-white mb-8">
-              <h3 className="text-xl font-black uppercase text-gecko-green mb-4">Trip Budget Calculator</h3>
-              <p className="font-bold mb-2">Monthly Saving Target: <span className="font-mono text-xl">₹{budgetSlider.toLocaleString('en-IN')}</span></p>
-              <input 
-                type="range" 
-                min="500" max="10000" step="500" 
-                value={budgetSlider} 
-                onChange={(e) => setBudgetSlider(parseInt(e.target.value, 10))}
-                className="w-full accent-gecko-green mb-6 cursor-pointer"
-              />
-              <div className="flex flex-col sm:flex-row gap-4 bg-white brutal-border p-4">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-light font-bold mb-1 uppercase">Estimated Timeline</p>
-                  <p className="font-bold">Ready for avg. trip in <span className="text-gecko-green">{estimatedMonths} month{estimatedMonths > 1 ? 's' : ''}!</span></p>
-                </div>
-                <div className="flex-1 border-t-2 sm:border-t-0 sm:border-l-2 border-black pt-4 sm:pt-0 sm:pl-4">
-                  <p className="text-sm text-gray-light font-bold mb-1 uppercase">Initial Reward Unlocked</p>
-                  <p className="font-bold text-neon-red flex items-center gap-1">
-                    <Gift className="w-4 h-4" /> 50% Off Travel Bags
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-grow relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-light">
-                <Search className="w-5 h-5"/>
-              </span>
-              <input 
-                type="text"
-                placeholder="Search experiences..." 
-                className="w-full bg-white border-2 border-black py-2 pl-10 pr-4 font-bold focus:border-gecko-green focus:outline-none placeholder:text-gray-dark text-black"
-              />
-            </div>
-            <div className="relative min-w-[200px]">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-light">
-                <Filter className="w-5 h-5"/>
-              </span>
-              <select 
-                value={filterDestination}
-                onChange={(e) => setFilterDestination(e.target.value)}
-                className="w-full bg-white border-2 border-black py-2 pl-10 pr-4 font-bold focus:border-gecko-green focus:outline-none appearance-none text-black cursor-pointer"
-              >
-                {destinations.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Trip Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredTrips.length === 0 ? (
-              <div className="col-span-full brutal-card text-center py-12">
-                <p className="text-2xl font-black uppercase text-gray-dark">No trips available yet</p>
-                <p className="text-gray-light font-bold mt-2">Agencies will definitely post something spectacular soon.</p>
-              </div>
-            ) : filteredTrips.map(trip => {
-              const tripAgency = agencies.find(a => a.id === trip.agencyId);
-              const isLocked = user.lockedTripId === trip.id;
-              
-              return (
-                <div key={trip.id} className={`brutal-card flex flex-col p-0 overflow-hidden ${isLocked ? 'ring-4 ring-gecko-green scale-[1.02]' : ''}`}>
-                  <div className="h-48 w-full relative">
-                    <img src={trip.image} alt={trip.title} className="w-full h-full object-cover" />
-                    <div className="absolute top-2 right-2 bg-white text-gecko-green font-bold px-3 py-1 brutal-border border-gecko-green text-sm flex items-center gap-1">
-                      <Clock className="w-4 h-4" /> {trip.duration} Days
-                    </div>
-                  </div>
-                  <div className="p-5 flex flex-col flex-grow">
-                    <div className="mb-2">
-                       <p className="text-xs font-bold text-gray-light uppercase tracking-wider mb-1 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {trip.destination}
-                       </p>
-                       <h3 className="text-xl font-black uppercase leading-tight ">{trip.title}</h3>
-                       <p className="text-sm font-bold text-gecko-green mt-1">by {tripAgency?.agencyName}</p>
-                    </div>
-                    
-                    <div className="mt-auto pt-4 flex items-end justify-between">
-                      <div>
-                        <p className="text-xs text-gray-light font-bold uppercase mb-1">Total Cost</p>
-                        <p className="text-2xl font-black font-mono">₹{trip.price.toLocaleString('en-IN')}</p>
-                      </div>
-                      
-                      {isLocked ? (
-                        <div className="flex gap-2">
-                          {trip.itinerary && trip.itinerary.length > 0 && (
-                            <button onClick={() => setShowMapModal(trip)} className="brutal-button-inverse !py-2 !px-3" title="Treasure Map"><Map className="w-5 h-5"/></button>
-                          )}
-                          <div className="bg-gecko-green text-off-white font-black uppercase px-4 py-2 flex items-center gap-2 border-2 border-black">
-                             <Check className="w-5 h-5"/> Locked
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          {trip.itinerary && trip.itinerary.length > 0 && (
-                            <button onClick={() => setShowMapModal(trip)} className="brutal-button-inverse !py-2 !px-3" title="Treasure Map"><Map className="w-5 h-5"/></button>
-                          )}
-                          <button 
-                            onClick={() => handleLockTrip(trip.id)}
-                            className={`brutal-button !py-2 ${user.lockedTripId ? 'opacity-50 cursor-not-allowed hover:bg-gecko-green' : ''}`}
-                            disabled={!!user.lockedTripId && user.walletBalance > 0}
-                          >
-                            Lock Trip
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      {/* HEADER BAR */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-100 px-4 py-3 flex items-center justify-between">
+        <h1 className="font-serif text-2xl font-bold tracking-tight">Voyage</h1>
+        <div className="flex items-center gap-5">
+          <Heart className="w-6 h-6 text-black" strokeWidth={1.8} />
+          <div className="relative">
+            <Send className="w-6 h-6 text-black" strokeWidth={1.8} />
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">2</span>
           </div>
         </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="brutal-card p-0 flex flex-col overflow-hidden relative border-4 border-black">
-              <div className="bg-white text-black p-2 text-center text-xs font-bold border-b-4 border-black uppercase">Unlocks at 10% Savings</div>
-              <img src="https://images.unsplash.com/photo-1547941126-3d5322b218b0?q=80&w=400&auto=format&fit=crop" className={`h-48 w-full object-cover ${!milestone10 ? 'grayscale blur-sm' : ''}`} alt="Travel Bag" />
-              <div className="p-4 bg-white flex-grow flex flex-col">
-                <h4 className="font-black text-2xl mb-1 text-black uppercase">Travel Bag</h4>
-                <p className="text-gecko-green font-bold text-lg">50% Off</p>
-                <div className="mt-auto pt-4">
-                  {milestone10 ? (
-                    <button className="brutal-button w-full !bg-gecko-green !text-black" onClick={() => setShowRewardModal({ title: '50% Off Decathlon Bag', code: 'DCA-GECKO-50' })}>Claim Reward</button>
-                  ) : (
-                    <button className="brutal-button-inverse w-full opacity-50 cursor-not-allowed">Locked</button>
-                  )}
-                </div>
-              </div>
-            </div>
+      </header>
 
-            <div className="brutal-card p-0 flex flex-col overflow-hidden relative border-4 border-black">
-              <div className="bg-white text-black p-2 text-center text-xs font-bold border-b-4 border-black uppercase">Unlocks at 25% Savings</div>
-              <img src="https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=400&auto=format&fit=crop" className={`h-48 w-full object-cover ${!milestone25 ? 'grayscale blur-sm' : ''}`} alt="Jacket" />
-              <div className="p-4 bg-white flex-grow flex flex-col">
-                <h4 className="font-black text-xl mb-1 text-black uppercase">Trekking Jacket</h4>
-                <p className="text-gecko-green font-bold text-lg">Free with Code</p>
-                <div className="mt-auto pt-4">
-                  {milestone25 ? (
-                    <button className="brutal-button w-full !bg-gecko-green !text-black" onClick={() => setShowRewardModal({ title: 'Free Trekking Jacket', code: 'JCKT-FREE' })}>Claim Reward</button>
-                  ) : (
-                    <button className="brutal-button-inverse w-full opacity-50 cursor-not-allowed">Locked</button>
-                  )}
+      {/* STATE A: HOME FEED */}
+      {activeTab === 'home' && (
+        <div className="animate-in fade-in duration-300">
+          {/* Stories Tray */}
+          <div className="flex gap-4 overflow-x-auto px-4 py-3 border-b border-neutral-100" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {stories.map(s => (
+              <div key={s.id} className="flex flex-col items-center shrink-0 w-16">
+                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-rose-500 to-fuchsia-600 relative cursor-pointer hover:scale-105 transition-transform">
+                  <div className="w-full h-full bg-white rounded-full p-[2px]">
+                    <img src={s.image} alt={s.title} className="w-full h-full object-cover rounded-full" />
+                  </div>
                 </div>
+                <span className="text-[10px] font-medium mt-1 truncate w-full text-center text-neutral-800">{s.title}</span>
               </div>
-            </div>
-
-            <div className="brutal-card p-0 flex flex-col overflow-hidden relative border-4 border-black">
-              <div className="bg-white text-black p-2 text-center text-xs font-bold border-b-4 border-black uppercase">Unlocks at 50% Savings</div>
-              <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400&auto=format&fit=crop" className={`h-48 w-full object-cover ${!milestone50 ? 'grayscale blur-sm' : ''}`} alt="Shoes" />
-              <div className="p-4 bg-white flex-grow flex flex-col">
-                <h4 className="font-black text-xl mb-1 text-black uppercase">Hiking Shoes</h4>
-                <p className="text-gecko-green font-bold text-lg">30% Off Partner Brand</p>
-                <div className="mt-auto pt-4">
-                  {milestone50 ? (
-                    <button className="brutal-button w-full !bg-gecko-green !text-black" onClick={() => setShowRewardModal({ title: '30% Off Hiking Shoes', code: 'SHOE-30' })}>Claim Reward</button>
-                  ) : (
-                    <button className="brutal-button-inverse w-full opacity-50 cursor-not-allowed">Locked</button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="brutal-card p-0 flex flex-col overflow-hidden relative border-4 border-black">
-              <div className="bg-white text-black p-2 text-center text-xs font-bold border-b-4 border-black uppercase">Unlocks at 75% Savings</div>
-              <img src="https://images.unsplash.com/photo-1491933382434-500287f9b54b?q=80&w=400&auto=format&fit=crop" className={`h-48 w-full object-cover ${!milestone75 ? 'grayscale blur-sm' : ''}`} alt="Gadget" />
-              <div className="p-4 bg-white flex-grow flex flex-col">
-                <h4 className="font-black text-xl mb-1 text-black uppercase">Action Camera</h4>
-                <p className="text-gecko-green font-bold text-lg">20% Off</p>
-                <div className="mt-auto pt-4">
-                  {milestone75 ? (
-                    <button className="brutal-button w-full !bg-gecko-green !text-black" onClick={() => setShowRewardModal({ title: '20% Off Action Camera', code: 'CAM-20' })}>Claim Reward</button>
-                  ) : (
-                    <button className="brutal-button-inverse w-full opacity-50 cursor-not-allowed">Locked</button>
-                  )}
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
-        )}
-      </div>
 
-      {/* Right Column: Wallet & Progression Sidebar */}
-      <div className="w-full lg:w-96 flex-shrink-0 order-1 lg:order-2">
-        <div className="sticky top-24">
-
-          {/* Gamification Streak */}
-          <div className="bg-white border-4 border-black p-4 flex items-center justify-between mb-6 brutal-shadow">
-            <div className="flex items-center gap-3">
-              <Flame className="w-8 h-8 text-neon-red" />
-              <div>
-                <p className="text-black font-black uppercase text-xl leading-none">Save Streak</p>
-                <p className="text-gray-light text-sm font-bold mt-1">Consistency is key.</p>
+          {/* Feed Card 1: Flight Status */}
+          <div className="border-b border-neutral-100 pb-4">
+            <div className="p-3 flex items-center justify-between px-4 mt-2">
+              <div className="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=100&auto=format&fit=crop" className="w-8 h-8 rounded-full object-cover border border-neutral-200" alt="Emirates" />
+                <span className="font-bold text-sm tracking-tight">Flight EK-571 to Dubai</span>
               </div>
+              <MoreHorizontal className="w-5 h-5 text-neutral-800" />
             </div>
-            <div className="text-3xl font-black font-mono text-black">
-              {user.streakDays || 0}
-              <span className="text-sm text-gray-light ml-1">days</span>
-            </div>
-          </div>
-          
-          {/* Active Trip Tracker */}
-          <div className="brutal-card border-black mb-6 brutal-shadow">
-            <h3 className="font-black text-xl mb-4 uppercase flex items-center gap-2 border-b-4 border-gray-dark pb-3">
-              <Wallet className="w-6 h-6 text-gecko-green" /> Wallet
-            </h3>
             
-            {!lockedTrip ? (
-              <div className="text-center py-6">
-                <AlertTriangle className="w-12 h-12 text-gray-light mx-auto mb-3" />
-                <p className="font-bold text-lg mb-1">No Trip Locked</p>
-                <p className="text-sm text-gray-light">Lock a trip to start your savings journey and unlock gear.</p>
+            <div className="bg-neutral-900 text-white aspect-[4/5] sm:aspect-square flex flex-col justify-between p-6 m-4 sm:mx-0 sm:my-0 sm:rounded-sm rounded-xl overflow-hidden relative shadow-md">
+              {/* Grainy texture overlay */}
+              <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
+              <div className="flex justify-between items-center z-10">
+                <div className="font-mono text-xs opacity-70 tracking-widest"><span className="text-red-500 mr-1 animate-pulse">●</span>LIVE FLIGHT STATUS</div>
+                <Plane className="w-5 h-5 opacity-80" />
               </div>
-            ) : (
-              <div>
-                <p className="text-sm font-bold uppercase mb-1 text-gray-light">Saving for:</p>
-                <p className="font-black text-lg mb-1">{lockedTrip.title}</p>
-                <p className="text-sm font-bold text-gecko-green mb-6">{agency?.agencyName}</p>
-                
-                <div className="bg-white p-3 border-2 border-black mb-4">
-                  <p className="text-xs font-bold text-gray-light uppercase mb-1 flex items-center justify-between">
-                    <span>Est. Completion</span>
-                    <span className="text-gecko-green">{estimatedCompletionDate}</span>
-                  </p>
-                  <p className="text-xs font-bold text-gray-light uppercase flex items-center justify-between">
-                    <span>Monthly Contrib.</span>
-                    <span className="font-mono text-black">₹{(user.monthlyContribution || 0).toLocaleString('en-IN')}</span>
-                  </p>
-                </div>
-
+              <div className="my-8 z-10 w-full">
                 <div className="flex justify-between items-end mb-2">
-                  <div>
-                    <p className="text-4xl font-black font-mono uppercase text-black">₹{safeWalletBalance.toLocaleString('en-IN')}</p>
-                    <p className="text-xs text-gray-light font-bold">of <span className="text-black">₹{(lockedTrip.price || 0).toLocaleString('en-IN')}</span> target</p>
-                  </div>
-                  <p className="text-2xl font-black text-gecko-green">{progressPercentage}%</p>
+                  <div className="text-5xl font-bold font-serif tabular-nums">DEL</div>
+                  <div className="text-lg opacity-80 pb-2"><Plane className="w-6 h-6 text-neutral-400 rotate-45" /></div>
+                  <div className="text-5xl font-bold font-serif tabular-nums text-right">DXB</div>
                 </div>
-
-                {/* Progress Bar Container */}
-                <div className="relative w-full h-8 bg-gray-200 border-2 border-black mb-8">
-                  {/* Fill Bar */}
-                  <div 
-                    className="h-full bg-gecko-green transition-all duration-1000 border-r-4 border-black"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
-                  
-                  {/* Milestones Markers */}
-                  {[10, 25, 50, 75].map(percent => {
-                    const isReached = progressPercentage >= percent;
-                    return (
-                      <div key={percent} className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center bg-white border-2 border-black rounded-full w-6 h-6 transition-transform hover:scale-125 cursor-pointer z-10"
-                           style={{ left: `calc(${percent}% - 12px)`, borderColor: isReached ? '#32FF7E' : '#9ca3af' }}
-                           onClick={() => isReached && setActiveTab('rewards')}
-                           title={`${percent}% Reward`}>
-                        <Gift className={`w-3 h-3 ${isReached ? 'text-gecko-green' : 'text-gray-light'}`} />
-                      </div>
-                    )
-                  })}
+                <div className="w-full bg-neutral-800 h-1 mt-6 rounded-full overflow-hidden">
+                  <div className="bg-white h-full w-[65%]" />
                 </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => setShowTopUpModal(true)}
-                    className="brutal-button !p-2 text-sm flex items-center justify-center gap-1"
-                    disabled={progressPercentage >= 100}
-                  >
-                   <DollarSign className="w-4 h-4" /> Top Up
-                  </button>
-                  <button 
-                    className="brutal-button-inverse !p-2 text-sm flex items-center justify-center gap-1 !text-neon-red !border-neon-red hover:!bg-neon-red hover:!text-black"
-                    onClick={() => safeWalletBalance > 0 && setShowWithdrawModal(true)}
-                    disabled={safeWalletBalance === 0}
-                  >
-                    Withdraw
-                  </button>
+                <div className="flex justify-between mt-3 text-xs font-medium uppercase tracking-wider text-neutral-400">
+                  <span>Departed 14:00</span>
+                  <span>Arriving 16:30</span>
                 </div>
-
-                {/* Wallet Journal */}
-                <div className="mt-8">
-                  <h4 className="text-sm font-black uppercase mb-3 flex items-center gap-1 border-b-2 border-black pb-1"><Wallet className="w-4 h-4" /> Wallet Journal</h4>
-                  <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
-                    {transactions && transactions.length > 0 ? (
-                      transactions.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(tx => (
-                        <div key={tx.id} className="flex justify-between items-center bg-white p-2 border-2 border-black text-xs font-mono">
-                          <span className="text-gray-dark font-bold">{new Date(tx.date).toLocaleDateString()}</span>
-                          <span className="uppercase font-bold">{tx.type}</span>
-                          <span className={tx.type === 'deposit' ? 'text-gecko-green font-black' : 'text-neon-red font-black'}>
-                            {tx.type === 'deposit' ? '+' : '-'}₹{tx.amount}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                       <p className="text-xs text-gray-light text-center font-bold">No transactions yet.</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Mission / Goal text */}
-                {!milestone10 && progressPercentage < 10 && (
-                  <p className="mt-6 text-sm font-bold text-center text-gray-light border-t-2 border-gray-dark pt-4">
-                    Complete this week's goal to unlock <span className="text-gecko-green">50% off travel bags</span>!
-                  </p>
-                )}
-
-                {progressPercentage >= 100 && (
-                   <div className="mt-4 flex flex-col gap-2">
-                     <div className="bg-gecko-green text-off-white font-black p-3 text-center border-2 border-black animate-pulse uppercase">
-                        🎉 TARGET REACHED!
-                     </div>
-                     <button 
-                       className="brutal-button !bg-off-white !text-black !py-3 !border-black"
-                       onClick={() => alert("Simulated Booking Action: Your trip to " + lockedTrip.destination + " is confirmed via " + agency?.agencyName + "!")}
-                     >
-                       CONFIRM BOOKING
-                     </button>
-                   </div>
-                )}
               </div>
-            )}
+              <div className="grid grid-cols-3 gap-4 border-t border-neutral-800 pt-5 z-10">
+                <div>
+                  <div className="text-[10px] text-neutral-400 uppercase tracking-widest mb-1">Boarding</div>
+                  <div className="font-bold text-base">Now</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-neutral-400 uppercase tracking-widest mb-1">Gate</div>
+                  <div className="font-bold text-base">14B</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-neutral-400 uppercase tracking-widest mb-1">Terminal</div>
+                  <div className="font-bold text-base">T3</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-4 py-2">
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex gap-4">
+                  <button onClick={() => toggleLike('f1')} className="transition-transform active:scale-95">
+                    <Heart className={`w-6 h-6 ${likedTrips['f1'] ? 'fill-red-500 text-red-500' : 'text-neutral-800'}`} strokeWidth={1.8} />
+                  </button>
+                  <button className="transition-transform active:scale-95"><MessageCircle className="w-6 h-6 text-neutral-800" strokeWidth={1.8} /></button>
+                  <button className="transition-transform active:scale-95"><Share2 className="w-6 h-6 text-neutral-800" strokeWidth={1.8} /></button>
+                </div>
+                <Bookmark className="w-6 h-6 text-neutral-800" strokeWidth={1.8} />
+              </div>
+              <div className="text-sm text-neutral-800 leading-relaxed">
+                <span className="font-bold mr-2 text-black">Boarding in 45 mins</span>
+                Terminal change announced. Check boards. Keep passport & boarding pass handy. ✈️ 🇦🇪
+              </div>
+              <div className="text-[10px] text-neutral-500 mt-2 font-medium tracking-wider">12 MINUTES AGO</div>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* STATE B: PROFILE VIEW */}
+      {activeTab === 'profile' && (
+        <div className="animate-in fade-in duration-300">
+          <div className="px-4 pt-6 flex items-center justify-between">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full p-[2px] border border-neutral-300 relative">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop" className="w-full h-full rounded-full object-cover" alt="User profile" />
+              </div>
+              <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 border-2 border-white">
+                <PlusSquare className="w-3 h-3 text-white" />
+              </div>
+            </div>
+            <div className="flex-1 flex justify-around pl-4">
+              <div className="text-center">
+                <div className="font-bold text-lg">24</div>
+                <div className="text-xs text-neutral-800">Trips</div>
+              </div>
+              <div className="text-center">
+                <div className="font-bold text-lg">12</div>
+                <div className="text-xs text-neutral-800">Countries</div>
+              </div>
+              <div className="text-center">
+                <div className="font-bold text-lg">8</div>
+                <div className="text-xs text-neutral-800">Bucket List</div>
+              </div>
+            </div>
+          </div>
+          <div className="px-4 py-4">
+            <div className="font-bold text-sm tracking-tight">{user?.name || 'Globetrotter'}</div>
+            <div className="text-sm mt-1 whitespace-pre-wrap leading-tight text-neutral-800 text-sm">
+              {user?.preferences || 'Digital Nomad • Documenting moments over monuments\n📍 Next: Kyoto\n🔗 travelgecko.com/explore'}
+            </div>
+          </div>
+          <div className="px-4 flex gap-2">
+            <button className="flex-[3] bg-neutral-100 hover:bg-neutral-200 text-black font-semibold text-sm py-1.5 rounded-lg transition-colors">Edit Profile</button>
+            <button className="flex-[3] bg-neutral-100 hover:bg-neutral-200 text-black font-semibold text-sm py-1.5 rounded-lg transition-colors">View Wallet</button>
+            <button className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-black flex items-center justify-center py-1.5 rounded-lg transition-colors"><Bell className="w-4 h-4" /></button>
           </div>
           
-        </div>
-      </div>
-
-      {/* --- MODALS --- */}
-
-      {/* Top Up Modal */}
-      {showTopUpModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="brutal-card border-black w-full max-w-sm brutal-shadow relative animate-in zoom-in-95">
-            <h3 className="text-xl font-black uppercase mb-4 text-center text-black">Simulate UPI Payment</h3>
-            <p className="text-sm font-bold text-gray-light mb-6 text-center">Add funds securely to your travel wallet.</p>
-            
-            <div className="mb-6 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-black text-xl text-gecko-green">₹</span>
-              <input 
-                type="number" 
-                value={topUpAmount}
-                onChange={(e) => setTopUpAmount(e.target.value)}
-                className="w-full bg-white border-4 border-black py-3 pl-8 pr-4 font-mono font-black text-xl text-black focus:border-gecko-green focus:outline-none"
-                placeholder="1000"
-                autoFocus
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button className="flex-1 px-4 py-3 font-bold uppercase text-black hover:bg-gray-200 border-2 border-transparent" onClick={() => setShowTopUpModal(false)}>Cancel</button>
-              <button className="flex-1 brutal-button" onClick={handleTopUp}>PAY BY UPI</button>
-            </div>
+          <div className="mt-6 border-t border-neutral-200 flex">
+            <button className="flex-1 flex justify-center py-3 border-b border-black text-black">
+              <Grid className="w-6 h-6" strokeWidth={1.5} />
+            </button>
+            <button className="flex-1 flex justify-center py-3 border-b border-transparent text-neutral-300 transition-colors">
+              <MapPin className="w-6 h-6" strokeWidth={1.5} />
+            </button>
+            <button className="flex-1 flex justify-center py-3 border-b border-transparent text-neutral-300 transition-colors">
+              <Bookmark className="w-6 h-6" strokeWidth={1.5} />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-[2px]">
+            {profileTrips.map(p => (
+              <div key={p.id} className="aspect-square relative group cursor-pointer">
+                <img src={p.image} className="w-full h-full object-cover" alt={p.stamp} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                <div className="absolute bottom-2 left-2 text-white font-serif font-bold text-[10px] sm:text-xs tracking-widest">{p.stamp}</div>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Reward/Coupon Modal */}
-      {showRewardModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="brutal-card w-full max-w-sm border-gecko-green brutal-shadow relative animate-in zoom-in-95 bg-white">
-             <div className="absolute -top-6 -right-6 bg-gecko-green text-off-white w-14 h-14 flex items-center justify-center rounded-full font-black text-2xl border-4 border-black rotate-12">
-               🎉
-             </div>
-             <h3 className="text-2xl font-black uppercase mb-2 text-gecko-green">Reward Unlocked!</h3>
-             <p className="font-bold mb-6 text-black">{showRewardModal.title}</p>
-             
-             <div className="bg-white p-4 border-4 border-dashed border-gray-light flex items-center justify-between group relative overflow-hidden mb-6">
-                <span className="font-mono text-xl font-black z-10 text-black">{showRewardModal.code}</span>
-                <button 
-                  onClick={() => copyToClipboard(showRewardModal.code)}
-                  className="bg-off-white text-black p-2 z-10 hover:bg-gecko-green transition-colors border-2 border-black"
-                >
-                  {copied ? <Check className="w-5 h-5"/> : <Copy className="w-5 h-5"/>}
-                </button>
-                {copied && <div className="absolute inset-0 bg-gecko-green/20 z-0 animate-pulse" />}
-             </div>
-             
-             <button className="brutal-button w-full" onClick={() => setShowRewardModal(null)}>Awesome, Close</button>
+      {/* STATE C: EXPLORE VIEW */}
+      {activeTab === 'explore' && (
+        <div className="animate-in fade-in duration-300 p-4 pt-2">
+          {/* Search Bar */}
+          <div className="relative mb-6">
+            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" strokeWidth={2} />
+            <input 
+              type="text" 
+              placeholder="Search experiences or ask AI..." 
+              className="w-full bg-neutral-100 hover:bg-neutral-200 transition-colors rounded-xl py-2.5 pl-10 pr-4 outline-none text-sm font-medium text-black placeholder:text-neutral-500" 
+            />
           </div>
-        </div>
-      )}
 
-      {/* Loss Aversion Withdrawal Guard Modal */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 backdrop-blur-md">
-           <div className="brutal-card w-full max-w-lg border-neon-red brutal-shadow-red relative animate-in zoom-in-95 bg-white" style={{ '--color-gecko-green': '#ff073a' } as any}>
-              
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-neon-red p-2 border-2 border-black">
-                  <ShieldAlert className="w-8 h-8 text-black" />
+          {/* AI Discovery Box */}
+          <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-6 text-white shadow-md mb-6 flex flex-col justify-center min-h-[150px] relative overflow-hidden transition-transform hover:scale-[1.02] cursor-pointer">
+             <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+             <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/30 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4"></div>
+             
+             <div className="z-10 relative">
+                <h3 className="font-serif font-bold text-2xl mb-1 drop-shadow-sm">Need an itinerary?</h3>
+                <p className="text-sm font-medium opacity-90 mb-4 tracking-tight">AI Travel Assistant</p>
+                <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-lg p-3 w-full outline-none focus:bg-white/30 transition-colors">
+                  <span className="text-white font-semibold">Plan a 3-day weekend to...</span> <span className="animate-pulse">|</span>
                 </div>
-                <h3 className="text-3xl font-black uppercase text-neon-red">Wait! Are you sure?</h3>
-              </div>
-
-              <div className="bg-white border-2 border-neon-red p-4 mb-8">
-                <p className="text-lg font-bold mb-4 text-black">
-                  You're only <span className="font-mono text-neon-red">₹{((lockedTrip?.price || 0) - safeWalletBalance).toLocaleString('en-IN')}</span> away from your trip.
-                  If you withdraw your <span className="font-mono text-neon-red">₹{safeWalletBalance.toLocaleString('en-IN')}</span> savings now:
-                </p>
-                <ul className="space-y-3 font-bold text-gray-light">
-                  <li className="flex items-start gap-2">
-                    <span className="text-neon-red mt-1">✗</span> 
-                    You lose your {user.streakDays || 0}-day streak.
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-neon-red mt-1">✗</span> 
-                    Your {lockedTrip?.title} progress resets to <span className="text-black">0%</span>.
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-neon-red mt-1">✗</span> 
-                    You lose access to unlocked rewards.
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-neon-red mt-1">✗</span> 
-                    Your booking priority drops.
-                  </li>
-                </ul>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <button 
-                  className="brutal-button !bg-gecko-green !text-black !py-4 text-xl"
-                  onClick={() => setShowWithdrawModal(false)}
-                >
-                  Continue Saving
-                </button>
-                
-                <button 
-                  className="text-gray-light text-sm font-bold underline hover:text-neon-red mt-2"
-                  onClick={handleWithdraw}
-                >
-                  Withdraw Anyway
-                </button>
-              </div>
-
-           </div>
-        </div>
-      )}
-
-      {/* Treasure Map Modal */}
-      {showMapModal && showMapModal.itinerary && (
-        <div className="fixed inset-0 z-[60] bg-off-white/95 flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
-           <div className="brutal-card w-full max-w-4xl border-black brutal-shadow relative bg-[#Fdfbf7] p-8 sm:p-12 map-pattern bg-[length:20px_20px]">
-             
-             {/* Map Background Pattern (simple grid + dot) */}
-             <style dangerouslySetInnerHTML={{__html: `
-               .map-pattern {
-                 background-image: radial-gradient(#d1d5db 2px, transparent 2px);
-                 background-size: 30px 30px;
-               }
-             `}} />
-
-             <div className="absolute top-4 right-4 z-10">
-               <button 
-                 onClick={() => setShowMapModal(null)}
-                 className="brutal-button-inverse !py-1 !px-2 text-xl font-black"
-               >
-                 X
-               </button>
              </div>
-
-             <div className="text-center mb-12 relative z-10">
-                <Map className="w-12 h-12 mx-auto mb-4 text-black" />
-                <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-widest text-black mb-2">Treasure Map</h2>
-                <p className="text-xl font-bold uppercase text-gecko-green tracking-widest">{showMapModal.title}</p>
+             <div className="absolute right-0 bottom-0 opacity-10 translate-x-1/4 translate-y-1/4 transition-transform group-hover:scale-110">
+                <MapPin className="w-32 h-32" />
              </div>
+          </div>
 
-             <div className="relative max-w-2xl mx-auto z-10">
-               {/* Connecting Line */}
-               <div className="absolute left-[27px] top-4 md:left-1/2 md:-ml-[2px] w-1 bg-black border-r-2 border-dashed border-gray-400 h-[calc(100%-30px)] z-0"></div>
-
-               {showMapModal.itinerary.map((stop, i) => (
-                 <div key={i} className={`relative flex items-center gap-6 mb-12 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} z-10`}>
-                    
-                    {/* Number Node */}
-                    <div className="md:absolute md:left-1/2 md:-ml-8 flex shrink-0 items-center justify-center w-16 h-16 bg-white border-4 border-black brutal-shadow rounded-full font-black text-2xl z-10">
-                      {stop.day}
-                    </div>
-
-                    {/* Content Card */}
-                    <div className={`flex-1 pl-16 md:pl-0 ${i % 2 === 0 ? 'md:pr-24 md:text-right' : 'md:pl-24 md:text-left'}`}>
-                      <div className="bg-white border-4 border-black p-4 brutal-shadow hover:-translate-y-1 transition-transform">
-                        <h4 className="font-black uppercase text-xl mb-2">{stop.title}</h4>
-                        <p className="text-gray-dark font-medium text-sm leading-relaxed">{stop.description}</p>
-                      </div>
-                    </div>
-
-                 </div>
-               ))}
-               
-               {/* X marks the spot */}
-               <div className="relative flex justify-center mt-16 z-10">
-                 <div className="text-6xl font-black text-neon-red drop-shadow-md">X</div>
+          <h2 className="font-bold text-lg mb-3 tracking-tight">Trending Aesthetics</h2>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="aspect-[4/5] relative rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity">
+               <img src="https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?q=80&w=400&auto=format&fit=crop" className="w-full h-full object-cover" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+               <div className="absolute bottom-3 left-3 text-white">
+                  <p className="font-bold text-sm tracking-widest uppercase">Coolcationing</p>
+                  <p className="text-xs opacity-80 mt-0.5">Scandinavia & Nordics</p>
                </div>
-             </div>
-
-           </div>
+            </div>
+            <div className="flex flex-col gap-2">
+               <div className="aspect-square relative rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity">
+                 <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=400&auto=format&fit=crop" className="w-full h-full object-cover" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                 <div className="absolute bottom-2 left-2 text-white">
+                    <p className="font-bold text-xs tracking-widest uppercase">Sleep Tourism</p>
+                 </div>
+               </div>
+               <div className="aspect-square relative rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity">
+                 <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=400&auto=format&fit=crop" className="w-full h-full object-cover" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                 <div className="absolute bottom-2 left-2 text-white">
+                    <p className="font-bold text-xs tracking-widest uppercase">Pop-ups</p>
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Fallback views for other tabs */}
+      {['create', 'trips'].includes(activeTab) && (
+        <div className="flex flex-col items-center justify-center p-12 text-center animate-in fade-in h-[60vh]">
+          <Plane className="w-16 h-16 text-neutral-200 mb-4" strokeWidth={1} />
+          <h2 className="text-xl font-bold mb-2">Coming Soon</h2>
+          <p className="text-neutral-500 text-sm">This feature is currently in development.</p>
         </div>
       )}
 
+      {/* BOTTOM NAVIGATION BAR */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-100 pb-safe z-50">
+        <div className="flex justify-around items-center h-14 max-w-xl mx-auto px-2">
+          <button onClick={() => setActiveTab('home')} className="p-2 transition-transform active:scale-95 group">
+            <Home className={`w-[26px] h-[26px] transition-colors ${activeTab==='home'? 'text-black fill-black' : 'text-neutral-800'}`} strokeWidth={1.8}/>
+          </button>
+          <button onClick={() => setActiveTab('explore')} className="p-2 transition-transform active:scale-95 group">
+            <Search className={`w-[26px] h-[26px] transition-colors ${activeTab==='explore'? 'text-black stroke-[2.5px]' : 'text-neutral-800'}`} strokeWidth={1.8}/>
+          </button>
+          <button onClick={() => setActiveTab('create')} className="p-2 transition-transform active:scale-95 group">
+            <PlusSquare className={`w-[26px] h-[26px] transition-colors ${activeTab==='create'? 'text-black' : 'text-neutral-800'}`} strokeWidth={1.8}/>
+          </button>
+          <button onClick={() => setActiveTab('trips')} className="p-2 transition-transform active:scale-95 group">
+            <Map className={`w-[26px] h-[26px] transition-colors ${activeTab==='trips'? 'text-black fill-black' : 'text-neutral-800'}`} strokeWidth={1.8}/>
+          </button>
+          <button onClick={() => setActiveTab('profile')} className="p-2 transition-transform active:scale-95 group">
+            <UserIcon className={`w-[26px] h-[26px] transition-colors ${activeTab==='profile'? 'text-black fill-black' : 'text-neutral-800'}`} strokeWidth={1.8}/>
+          </button>
+        </div>
+      </nav>
+      
     </div>
   );
 };
+

@@ -146,13 +146,13 @@ const initialTrips: Trip[] = [
 ];
 
 const initialUsers: User[] = [
-  { id: "u1", name: "Rohan", role: "user", lockedTripId: null, walletBalance: 0, savedMilestones: [], streakDays: 42, monthlyContribution: 3000 }
+  { id: "u1", name: "Rohan", email: "rohan@example.com", role: "user", lockedTripId: null, walletBalance: 0, savedMilestones: [], streakDays: 42, monthlyContribution: 3000 }
 ];
 
 const initialAgencies: Agency[] = [
-  { id: "a1", agencyName: "Wanderlust India", role: "agency", totalRevenueEarned: 120000 },
-  { id: "a2", agencyName: "Nomad Treks", role: "agency", totalRevenueEarned: 45000 },
-  { id: "a3", agencyName: "Thrill Seekers", role: "agency", totalRevenueEarned: 85000 }
+  { id: "a1", email: "a1@example.com", agencyName: "Wanderlust India", role: "agency", totalRevenueEarned: 120000 },
+  { id: "a2", email: "a2@example.com", agencyName: "Nomad Treks", role: "agency", totalRevenueEarned: 45000 },
+  { id: "a3", email: "a3@example.com", agencyName: "Thrill Seekers", role: "agency", totalRevenueEarned: 85000 }
 ];
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
