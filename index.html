@@ -3,13 +3,95 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Travel Gecko</title>
+    <!-- PRIMARY META -->
+    <title>Travel Gecko — India's First Travel Agency Marketplace | Save & Book Trips</title>
+    <meta name="description" content="Travel Gecko is India's first Travel Agency Marketplace. Save ₹500/week in your Trip Wallet and unlock exclusive discounts on curated group trips to Kasol, Manali, Ladakh, and more. Free for travellers." />
+    <meta name="keywords" content="travel agency marketplace India, trip savings wallet, book group trips India, Kasol trip booking, budget travel India, travel gecko" />
+    <link rel="canonical" href="https://travel-gecko.vercel.app/" />
+
+    <!-- OPEN GRAPH -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://travel-gecko.vercel.app/" />
+    <meta property="og:title" content="Travel Gecko — India's First Travel Agency Marketplace" />
+    <meta property="og:description" content="Save money in your Trip Wallet and book curated trips from verified travel agencies at exclusive discounts. Kasol, Manali, Goa, Ladakh & more." />
+    <meta property="og:image" content="https://travel-gecko.vercel.app/og-home.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Travel Gecko" />
+    <meta property="og:locale" content="en_IN" />
+
+    <!-- TWITTER CARD -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@travelgecko" />
+    <meta name="twitter:title" content="Travel Gecko — Save & Book Trips Across India" />
+    <meta name="twitter:description" content="India's first Travel Agency Marketplace. Save ₹500/week for Kasol, Manali, Ladakh & more. Unlock discounts with your Trip Wallet." />
+    <meta name="twitter:image" content="https://travel-gecko.vercel.app/og-home.jpg" />
+
+    <!-- GEOGRAPHIC / LANGUAGE -->
+    <meta name="geo.region" content="IN" />
+    <meta name="geo.placename" content="India" />
+    <meta name="language" content="en-IN" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1DB954" />
     <script>
       window.addEventListener('error', function(event) {
         console.error('CRASH LOG:', event.error ? event.error.stack : event);
       });
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": ["Organization", "OnlineBusiness"],
+        "@id": "https://travel-gecko.vercel.app/#organization",
+        "name": "Travel Gecko",
+        "alternateName": ["TravelGecko", "Travel Gecko India"],
+        "url": "https://travel-gecko.vercel.app",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://travel-gecko.vercel.app/logo.png",
+          "width": 512,
+          "height": 512
+        },
+        "description": "India's first Travel Agency Marketplace where verified travel agencies list upcoming trips and travellers save money through the Trip Wallet to unlock exclusive discounts on trips and travel gear.",
+        "foundingDate": "2024",
+        "areaServed": {
+          "@type": "Country",
+          "name": "India"
+        },
+        "serviceType": [
+          "Travel Agency Marketplace",
+          "Trip Savings Wallet",
+          "Travel Booking Platform"
+        ],
+        "sameAs": [
+          "https://www.instagram.com/travelgecko",
+          "https://twitter.com/travelgecko",
+          "https://www.linkedin.com/company/travelgecko"
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://travel-gecko.vercel.app/#website",
+        "url": "https://travel-gecko.vercel.app",
+        "name": "Travel Gecko",
+        "description": "India's first Travel Agency Marketplace with Trip Wallet savings",
+        "publisher": {
+          "@id": "https://travel-gecko.vercel.app/#organization"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://travel-gecko.vercel.app/trips?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      }
     </script>
   </head>
   <body>

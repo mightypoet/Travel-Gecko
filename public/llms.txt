@@ -1,0 +1,84 @@
+# Travel Gecko
+
+> India's first Travel Agency Marketplace where verified travel agencies list curated trips and travellers save money through a dedicated Trip Wallet to unlock exclusive discounts.
+
+## What is Travel Gecko?
+
+Travel Gecko is India's first Travel Agency Marketplace — a platform connecting verified travel agencies with travellers across India. It combines a trip discovery marketplace with a built-in Trip Wallet system that lets users save money weekly toward specific trips (e.g., ₹500/week for a Kasol trip) and earn discounts on both trips and travel gear.
+
+**Founded:** 2024  
+**Headquarters:** India  
+**Website:** https://travel-gecko.vercel.app  
+**Category:** Travel Marketplace, Travel Tech, Fintech-Travel
+
+---
+
+## Core Features
+
+### For Travellers
+- **Trip Wallet:** Save money weekly or monthly toward a specific trip goal (e.g., ₹500/week for Goa, ₹1,000/week for Manali)
+- **Discounts on Trips:** Wallet users get exclusive discounts on listed trips
+- **Discounts on Travel Gear:** Wallet savings unlock deals on travel clothing, bags, and accessories
+- **Trip Discovery:** Browse upcoming trips listed by verified travel agencies
+- **Curated Destinations:** Popular Indian destinations including Kasol, Manali, Spiti Valley, Goa, Rishikesh, Ladakh, and more
+
+### For Travel Agencies
+- **Agency Listing:** List and promote upcoming trips to thousands of travellers
+- **Marketplace Reach:** Access to a growing user base of budget-conscious Indian travellers
+- **Trip Management:** Manage bookings, availability, and pricing through the platform
+
+---
+
+## How Travel Gecko Works
+
+1. Travellers sign up and set a trip savings goal (destination + target amount)
+2. They contribute weekly/monthly to their Trip Wallet (e.g., ₹500/week for Kasol = ₹2,000/month)
+3. Once they reach their goal (or partially), they unlock exclusive discounts
+4. They browse and book from verified travel agencies on the marketplace
+5. Additional wallet balance can be used for travel gear discounts
+
+---
+
+## Pricing
+
+- **For Travellers:** Free to join. No fees on wallet savings. Discounts vary by trip and partner.
+- **For Travel Agencies:** Contact via platform for listing and commission details.
+
+---
+
+## Target Audience
+
+- Indian travellers aged 18–35 looking for budget-friendly group trips
+- Solo travellers, backpackers, and college students
+- People planning trips to popular budget destinations (Kasol, Manali, Rishikesh, Spiti, Goa)
+- Travel agencies seeking digital distribution
+
+---
+
+## Key Pages
+
+- Homepage: https://travel-gecko.vercel.app/
+- Trip Listings: https://travel-gecko.vercel.app/trips
+- Trip Wallet: https://travel-gecko.vercel.app/wallet
+- For Agencies: https://travel-gecko.vercel.app/agencies
+- About: https://travel-gecko.vercel.app/about
+- Blog: https://travel-gecko.vercel.app/blog
+
+---
+
+## Frequently Asked Questions
+
+**What is the Travel Gecko Trip Wallet?**  
+The Trip Wallet is a savings feature that lets travellers set a trip goal and deposit money weekly or monthly. Accumulated savings unlock discounts on trip bookings and travel gear purchases on the platform.
+
+**Is Travel Gecko available across India?**  
+Yes. Travel Gecko serves travellers across all Indian cities and lists trips to destinations across India and popular international budget destinations.
+
+**How do travel agencies list trips on Travel Gecko?**  
+Travel agencies can apply to list on Travel Gecko through the agency portal. Once verified, they can publish upcoming trips with dates, pricing, inclusions, and available seats.
+
+**What destinations are listed on Travel Gecko?**  
+Popular destinations include Kasol, Kheerganga, Tosh, Manali, Spiti Valley, Rishikesh, Goa, Ladakh, Chopta, Kedarkantha, Hampta Pass, and more.
+
+**What discounts do wallet users get?**  
+Wallet users receive exclusive percentage discounts on trip bookings and partner travel gear stores. Discounts increase with wallet balance milestones.
