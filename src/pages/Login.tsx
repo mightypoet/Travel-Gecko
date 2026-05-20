@@ -84,53 +84,63 @@ export const Login = () => {
         </div>
       </section>
 
-      {/* Startup Pitch Deck Section */}
+      {/* Interactive Travel Budget Calculator Section */}
       <section className="w-full max-w-6xl px-4 py-20 border-t-8 border-black">
-        <h2 className="text-5xl font-black uppercase text-center mb-16 text-black">The Engine</h2>
+        <h2 className="text-5xl font-black uppercase text-center mb-16 text-black">Plan Your Escape</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* Revenue Model Infographic */}
-          <div className="brutal-card bg-gecko-green text-off-white border-4 border-black box-shadow-none brutal-shadow">
+          {/* Interactive Calculator */}
+          <div className="brutal-card bg-white border-4 border-black p-8 box-shadow-none brutal-shadow col-span-1 md:col-span-2 lg:col-span-1">
             <h3 className="text-3xl font-black mb-6 uppercase flex items-center gap-3">
-              <TrendingUp className="w-8 h-8" /> Revenue Model
+              <TrendingUp className="w-8 h-8 text-gecko-green" /> Setup SIP
             </h3>
-            <ul className="space-y-6 font-medium text-lg">
-              <li className="flex justify-between items-center border-b-4 border-black pb-2">
-                <span>Marketplace Commission</span>
-                <span className="font-black text-2xl">15-25%</span>
-              </li>
-              <li className="flex justify-between items-center border-b-4 border-black pb-2">
-                <span>Affiliate Revenue</span>
-                <span className="font-black text-2xl">5-15%</span>
-              </li>
-              <li className="flex justify-between items-center border-b-4 border-black pb-2">
-                <span>Escrow Yield Revenue</span>
-                <span className="font-black text-2xl">4.0-6.5%</span>
-              </li>
-              <li className="flex justify-between items-center pt-2">
-                <span>Featured Listings</span>
-                <span className="font-black text-xl">Paid Promos</span>
-              </li>
-            </ul>
+            <p className="text-gray-light font-medium mb-6">Calculate how easily you can fund a ₹50,000 trip in a few months using small daily or monthly investments.</p>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block font-black uppercase text-sm mb-2 text-black">Target Trip Cost (₹)</label>
+                <input 
+                  type="range" 
+                  min="5000" 
+                  max="200000" 
+                  step="5000"
+                  defaultValue="50000" 
+                  onChange={(e) => {
+                    const el = document.getElementById('trip-cost-display');
+                    const daily = document.getElementById('daily-saving-display');
+                    const target = parseInt(e.target.value);
+                    if (el) el.innerText = '₹' + target.toLocaleString('en-IN');
+                    if (daily) daily.innerText = '₹' + Math.ceil(target / 180).toLocaleString('en-IN') + ' / day';
+                  }}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gecko-green" 
+                />
+                <div className="text-right font-mono font-black text-2xl mt-2 text-gecko-green" id="trip-cost-display">
+                  ₹50,000
+                </div>
+              </div>
+
+              <div className="p-4 bg-off-white border-2 border-black flex justify-between items-center brutal-shadow-sm">
+                <span className="font-bold uppercase text-sm">Actionable Goal (6 Months):</span>
+                <span className="font-black text-xl text-black font-mono" id="daily-saving-display">₹278 / day</span>
+              </div>
+              
+              <button onClick={() => setShowLoginModal(true)} className="brutal-button w-full py-4 text-xl mt-4 bg-neon-red hover:bg-[#ff1a1a] text-white">
+                Start My Travel SIP
+              </button>
+            </div>
           </div>
 
-          {/* Infrastructure */}
-          <div className="flex flex-col justify-between gap-8">
-            <div className="brutal-card bg-white border-4 border-black h-full">
-              <h3 className="text-2xl font-black mb-4 uppercase text-black">Payment Infrastructure</h3>
-              <p className="text-gray-light font-medium mb-4">
-                Mock integrations with <span className="text-black font-bold">Razorpay</span> & <span className="text-black font-bold">Cashfree</span> for seamless wallet deposits, auto-pay, escrow simulations, and split settlements.
+          {/* Value Proposition */}
+          <div className="flex flex-col justify-between gap-8 h-full">
+            <div className="brutal-card bg-gecko-green border-4 border-black h-full flex flex-col justify-center">
+              <h3 className="text-3xl font-black mb-4 uppercase text-black">No More Loans</h3>
+              <p className="text-black font-bold text-lg mb-4">
+                Travel should be freeing, not a financial burden. Instead of racking up credit card debt, our micro-wallet helps you save automatically.
               </p>
-            </div>
-            
-            <div className="brutal-card bg-white border-4 border-black h-full">
-              <h3 className="text-2xl font-black mb-4 uppercase text-gecko-green">Automation Layer</h3>
-              <p className="text-gray-light font-medium mb-4">
-                Powered by n8n flows:
-              </p>
-              <ul className="list-disc pl-5 text-gray-light space-y-2 font-mono text-sm">
-                <li>Deposit → Webhook → Reward Trigger → WhatsApp Alert</li>
-                <li>Withdrawal Attempt → Alert → Retention Campaign</li>
+              <ul className="space-y-3 font-bold border-t-2 border-black pt-4">
+                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5"/> 100% Secure Escrow</li>
+                <li className="flex items-center gap-2"><Wallet className="w-5 h-5"/> Zero Hidden Fees</li>
+                <li className="flex items-center gap-2"><Zap className="w-5 h-5"/> Instant Pauses & Withdrawals</li>
               </ul>
             </div>
           </div>
@@ -189,7 +199,7 @@ export const Login = () => {
                 </p>
                 <div className="brutal-button w-full text-center flex items-center justify-center gap-2">
                   <svg className="w-6 h-6" viewBox="0 0 24 24">
-                      <path fill="currentColor" relative="true" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                      <path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
                   </svg>
                   Login as Traveler
                 </div>
@@ -211,7 +221,7 @@ export const Login = () => {
                 </p>
                 <div className="brutal-button-inverse w-full text-center flex items-center justify-center gap-2">
                   <svg className="w-6 h-6" viewBox="0 0 24 24">
-                      <path fill="currentColor" relative="true" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                      <path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
                   </svg>
                   Login as Agency
                 </div>
