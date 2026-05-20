@@ -180,41 +180,47 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
       if (user) {
-        if (user.email === 'rohan00as@gmail.com') {
-          // Grant admin role logic
-          setCurrentUser({
-            id: user.uid,
-            name: user.displayName || 'Super Admin',
-            email: user.email,
-            role: 'admin'
-          });
-          setLoading(false);
-          return;
-        }
+        try {
+          if (user.email === 'rohan00as@gmail.com') {
+            // Grant admin role logic
+            setCurrentUser({
+              id: user.uid,
+              name: user.displayName || 'Super Admin',
+              email: user.email,
+              role: 'admin'
+            });
+            return;
+          }
 
-        const activeRole = localStorage.getItem('activeRole');
-        
-        if (activeRole === 'agency') {
-          const agencyDoc = await getDoc(doc(db, 'agencies', user.uid));
-          if (agencyDoc.exists()) {
-            setCurrentUser({ id: user.uid, ...agencyDoc.data() } as Agency);
+          const activeRole = localStorage.getItem('activeRole');
+          
+          if (activeRole === 'agency') {
+            const agencyDoc = await getDoc(doc(db, 'agencies', user.uid));
+            if (agencyDoc.exists()) {
+              setCurrentUser({ id: user.uid, ...agencyDoc.data() } as Agency);
+            } else {
+              const userDoc = await getDoc(doc(db, 'users', user.uid));
+              if (userDoc.exists()) setCurrentUser({ id: user.uid, ...userDoc.data() } as User);
+            }
           } else {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) setCurrentUser({ id: user.uid, ...userDoc.data() } as User);
+            if (userDoc.exists()) {
+              setCurrentUser({ id: user.uid, ...userDoc.data() } as User);
+            } else {
+              const agencyDoc = await getDoc(doc(db, 'agencies', user.uid));
+              if (agencyDoc.exists()) setCurrentUser({ id: user.uid, ...agencyDoc.data() } as Agency);
+            }
           }
-        } else {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            setCurrentUser({ id: user.uid, ...userDoc.data() } as User);
-          } else {
-            const agencyDoc = await getDoc(doc(db, 'agencies', user.uid));
-            if (agencyDoc.exists()) setCurrentUser({ id: user.uid, ...agencyDoc.data() } as Agency);
-          }
+        } catch (error) {
+          console.error("Error fetching user profile in auth sync:", error);
+          setCurrentUser(null);
+        } finally {
+          setLoading(false);
         }
       } else {
         setCurrentUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => unsubAuth();
   }, []);
