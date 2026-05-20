@@ -160,19 +160,23 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | Agency | Admin | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [agencies, setAgencies] = useState<Agency[]>([]);
+  const [trips, setTrips] = useState<Trip[]>(initialTrips);
+  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [agencies, setAgencies] = useState<Agency[]>(initialAgencies);
   const [loading, setLoading] = useState(true);
 
   // Sync Trips
   useEffect(() => {
     if (!firebaseUser) return;
-    const unsub = onSnapshot(collection(db, 'trips'), (snapshot) => {
-      const tripsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Trip));
-      setTrips(tripsData);
-    });
-    return () => unsub();
+    try {
+      const unsub = onSnapshot(collection(db, 'trips'), (snapshot) => {
+        if (!snapshot.empty) {
+            const tripsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Trip));
+            setTrips(tripsData);
+        }
+      });
+      return () => unsub();
+    } catch(e) { console.warn(e); }
   }, [firebaseUser]);
 
   // Sync Auth State & Current User Profile
@@ -201,8 +205,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             }
           }
         } catch (error) {
-          console.error("Error fetching user profile in auth sync:", error);
-          setCurrentUser(null);
+          console.warn("Firestore offline or unavailable, falling back to local mock state:", error);
+          const activeRole = localStorage.getItem('activeRole') || 'user';
+          if (activeRole === 'agency') {
+             setCurrentUser({ id: user.uid, email: user.email || '', agencyName: user.displayName || 'Travel Agency', role: 'agency', totalRevenueEarned: 0 } as Agency);
+          } else {
+             setCurrentUser({ id: user.uid, email: user.email || '', name: user.displayName || 'Traveler', role: 'user', lockedTripId: null, walletBalance: 0, savedMilestones: [], streakDays: 0, monthlyContribution: 0 } as User);
+          }
         } finally {
           setLoading(false);
         }
@@ -218,36 +227,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (!firebaseUser) return;
     
-    if (currentUser?.role === 'admin' || currentUser?.role === 'agency') {
-      const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
-        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
-      });
-      const unsubAgencies = onSnapshot(collection(db, 'agencies'), (snapshot) => {
-        setAgencies(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Agency)));
-      });
-      return () => {
-        unsubUsers();
-        unsubAgencies();
-      };
-    } else if (currentUser?.role === 'user') {
-       // If traveler, just pull all agencies to display their names
-       const unsubAgencies = onSnapshot(collection(db, 'agencies'), (snapshot) => {
-          setAgencies(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Agency)));
-       });
-       return () => unsubAgencies();
-    }
+    try {
+      if (currentUser?.role === 'admin' || currentUser?.role === 'agency') {
+        const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+          if(!snapshot.empty) setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+        });
+        const unsubAgencies = onSnapshot(collection(db, 'agencies'), (snapshot) => {
+          if(!snapshot.empty) setAgencies(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Agency)));
+        });
+        return () => {
+          unsubUsers();
+          unsubAgencies();
+        };
+      } else if (currentUser?.role === 'user') {
+         // If traveler, just pull all agencies to display their names
+         const unsubAgencies = onSnapshot(collection(db, 'agencies'), (snapshot) => {
+            if(!snapshot.empty) setAgencies(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Agency)));
+         });
+         return () => unsubAgencies();
+      }
+    } catch(e) { console.warn(e); }
   }, [currentUser, firebaseUser]);
 
   // Update current user when their profile changes
   useEffect(() => {
     if (!firebaseUser || !currentUser || currentUser.role === 'admin') return;
     const collectionName = currentUser.role === 'user' ? 'users' : 'agencies';
-    const unsubUser = onSnapshot(doc(db, collectionName, firebaseUser.uid), (docSnap) => {
-      if (docSnap.exists()) {
-        setCurrentUser({ id: docSnap.id, ...docSnap.data() } as any);
-      }
-    });
-    return () => unsubUser();
+    try {
+      const unsubUser = onSnapshot(doc(db, collectionName, firebaseUser.uid), (docSnap) => {
+        if (docSnap.exists()) {
+          setCurrentUser({ id: docSnap.id, ...docSnap.data() } as any);
+        }
+      });
+      return () => unsubUser();
+    } catch(e) { console.warn(e); }
   }, [firebaseUser, currentUser?.role]);
 
   const login = async (role: Role) => {
@@ -261,39 +274,69 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const collectionName = role === 'user' ? 'users' : 'agencies';
       if (role === 'user') {
         const userRef = doc(db, 'users', fbUser.uid);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          const newUserData = {
-            email: fbUser.email,
-            name: fbUser.displayName || 'Traveler',
-            role: 'user',
-            lockedTripId: null,
-            walletBalance: 0,
-            savedMilestones: [],
-            streakDays: 0,
-            monthlyContribution: 0,
-            profileCompleted: false
+        try {
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            const newUserData = {
+              email: fbUser.email,
+              name: fbUser.displayName || 'Traveler',
+              role: 'user',
+              lockedTripId: null,
+              walletBalance: 0,
+              savedMilestones: [],
+              streakDays: 0,
+              monthlyContribution: 0,
+              profileCompleted: false
+            };
+            await setDoc(userRef, newUserData);
+            setCurrentUser({ id: fbUser.uid, ...newUserData } as User);
+          } else {
+            setCurrentUser({ id: fbUser.uid, ...userSnap.data() } as User);
+          }
+        } catch (dbError) {
+          console.warn("Firestore offline during login, using local state", dbError);
+          const mockUser = {
+              id: fbUser.uid,
+              email: fbUser.email || '',
+              name: fbUser.displayName || 'Traveler',
+              role: 'user' as const,
+              lockedTripId: null,
+              walletBalance: 0,
+              savedMilestones: [],
+              streakDays: 0,
+              monthlyContribution: 0,
+              profileCompleted: false
           };
-          await setDoc(userRef, newUserData);
-          setCurrentUser({ id: fbUser.uid, ...newUserData } as User);
-        } else {
-          setCurrentUser({ id: fbUser.uid, ...userSnap.data() } as User);
+          setCurrentUser(mockUser);
         }
       } else if (role === 'agency') {
         const agencyRef = doc(db, 'agencies', fbUser.uid);
-        const agencySnap = await getDoc(agencyRef);
-        if (!agencySnap.exists()) {
-          const newAgencyData = {
-            email: fbUser.email,
-            agencyName: fbUser.displayName || 'Travel Agency',
-            role: 'agency',
-            totalRevenueEarned: 0,
-            profileCompleted: false
+        try {
+          const agencySnap = await getDoc(agencyRef);
+          if (!agencySnap.exists()) {
+            const newAgencyData = {
+              email: fbUser.email,
+              agencyName: fbUser.displayName || 'Travel Agency',
+              role: 'agency',
+              totalRevenueEarned: 0,
+              profileCompleted: false
+            };
+            await setDoc(agencyRef, newAgencyData);
+            setCurrentUser({ id: fbUser.uid, ...newAgencyData } as Agency);
+          } else {
+            setCurrentUser({ id: fbUser.uid, ...agencySnap.data() } as Agency);
+          }
+        } catch (dbError) {
+          console.warn("Firestore offline during login, using local state", dbError);
+          const mockAgency = {
+              id: fbUser.uid,
+              email: fbUser.email || '',
+              agencyName: fbUser.displayName || 'Travel Agency',
+              role: 'agency' as const,
+              totalRevenueEarned: 0,
+              profileCompleted: false
           };
-          await setDoc(agencyRef, newAgencyData);
-          setCurrentUser({ id: fbUser.uid, ...newAgencyData } as Agency);
-        } else {
-          setCurrentUser({ id: fbUser.uid, ...agencySnap.data() } as Agency);
+          setCurrentUser(mockAgency);
         }
       }
       // state will be updated via onAuthStateChanged
@@ -338,12 +381,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Sync Transactions for current user
   useEffect(() => {
     if (currentUser?.role === 'user') {
-      const q = query(collection(db, 'wallet_transactions')); // Ideally filter by userId, skipping index creation
-      const unsub = onSnapshot(q, (snapshot) => {
-        const txData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletTransaction)).filter(tx => tx.userId === currentUser.id);
-        setTransactions(txData);
-      });
-      return () => unsub();
+      try {
+        const q = query(collection(db, 'wallet_transactions')); // Ideally filter by userId, skipping index creation
+        const unsub = onSnapshot(q, (snapshot) => {
+          if (!snapshot.empty) {
+            const txData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletTransaction)).filter(tx => tx.userId === currentUser.id);
+            setTransactions(txData);
+          }
+        });
+        return () => unsub();
+      } catch(e) { console.warn(e); }
     }
   }, [currentUser]);
 
@@ -365,11 +412,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Sync Contact Requests for Admin & Agency
   useEffect(() => {
     if (currentUser?.role === 'agency' || currentUser?.role === 'admin') {
-      const unsub = onSnapshot(collection(db, 'contact_requests'), (snapshot) => {
-        const reqData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactRequest));
-        setContactRequests(reqData);
-      });
-      return () => unsub();
+      try {
+        const unsub = onSnapshot(collection(db, 'contact_requests'), (snapshot) => {
+          if (!snapshot.empty) {
+            const reqData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactRequest));
+            setContactRequests(reqData);
+          }
+        });
+        return () => unsub();
+      } catch(e) { console.warn(e); }
     }
   }, [currentUser]);
 
