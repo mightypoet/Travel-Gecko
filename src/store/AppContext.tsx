@@ -181,17 +181,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setFirebaseUser(user);
       if (user) {
         try {
-          if (user.email === 'rohan00as@gmail.com') {
-            // Grant admin role logic
-            setCurrentUser({
-              id: user.uid,
-              name: user.displayName || 'Super Admin',
-              email: user.email,
-              role: 'admin'
-            });
-            return;
-          }
-
           const activeRole = localStorage.getItem('activeRole');
           
           if (activeRole === 'agency') {
