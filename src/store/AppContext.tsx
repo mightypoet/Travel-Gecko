@@ -192,18 +192,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return;
         }
 
-        // Find if user is in users or agencies
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setCurrentUser({ id: user.uid, ...userDoc.data() } as User);
-        } else {
+        const activeRole = localStorage.getItem('activeRole');
+        
+        if (activeRole === 'agency') {
           const agencyDoc = await getDoc(doc(db, 'agencies', user.uid));
           if (agencyDoc.exists()) {
             setCurrentUser({ id: user.uid, ...agencyDoc.data() } as Agency);
           } else {
-             // Document might be getting created by the login function right now,
-             // so we don't set currentUser to null here to avoid race conditions.
-             // If they are not logging in but refreshing, they stay on the home page until doc is created.
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) setCurrentUser({ id: user.uid, ...userDoc.data() } as User);
+          }
+        } else {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setCurrentUser({ id: user.uid, ...userDoc.data() } as User);
+          } else {
+            const agencyDoc = await getDoc(doc(db, 'agencies', user.uid));
+            if (agencyDoc.exists()) setCurrentUser({ id: user.uid, ...agencyDoc.data() } as Agency);
           }
         }
       } else {
@@ -252,6 +257,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const login = async (role: Role) => {
     try {
+      if (role) {
+        localStorage.setItem('activeRole', role);
+      }
       const fbUser = await loginWithGoogle();
       if (!fbUser) return;
 
